@@ -1,0 +1,14 @@
+{
+  "allowSyntheticDefaultImports": true,
+  "compilerOptions": {
+    "lib": ["ES6", "DOM", "ES2015", "ES2017"],
+    "esModuleInterop": true,
+    "removeComments": true,
+    "declaration": true,
+    "target": "ES6",
+    "module": "commonjs",
+    "outDir": "build",
+    "types": ["node"]
+  },
+  "exclude": ["node_modules", "build", "tsconfig.json"]
+}

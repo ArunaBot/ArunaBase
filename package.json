@@ -5,6 +5,9 @@
   "main": "build/index.js",
   "types": "src/main/index.ts",
   "scripts": {
+    "build": "npx tsc -p .",
+    "eslint": "npx eslint src/main",
+    "eslint:fix": "npx eslint src/main --fix",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
