@@ -1,14 +1,21 @@
 {
   "allowSyntheticDefaultImports": true,
+  "include": ["src/**/*"],
   "compilerOptions": {
-    "lib": ["ES6", "DOM", "ES2015", "ES2017"],
+    "lib": ["ES6", "DOM", "ES2015", "ES2017", "ES2018", "ES2019", "ES2020", "ES2021", "ESNext"],
     "esModuleInterop": true,
-    "removeComments": true,
+    "allowJs": true,
+    "removeComments": false,
     "declaration": true,
+    "declarationMap": true,
+    "traceResolution": true,
+    "moduleResolution": "node",
+    "skipLibCheck": true,
     "target": "ES6",
     "module": "commonjs",
-    "outDir": "build",
-    "types": ["node"]
+    "outDir": "build/src",
+    "types": ["node", "discord.js"],
+    "noImplicitAny": true
   },
-  "exclude": ["node_modules", "build", "tsconfig.json"]
+  "exclude": ["node_modules", "src/tests"]
 }
