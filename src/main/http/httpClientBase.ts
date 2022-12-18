@@ -11,16 +11,19 @@ export abstract class HTTPClientBase {
   protected async sendRequest(url: string, options: any): Promise<IncomingMessage> {
     return new Promise((resolve, reject) => {
       let request;
-      const urlPort = url.split(':')[1];
-      const urlPath = url.split('/')[1];
-      const urlHost = url.split('/')[0];
+      const urlHost = url.startsWith('http') ? url.split('://')[1].split('/')[0] : url.split('/')[0];
+      const urlPath = '/' + url.split('/').slice(url.startsWith('http') ? 3 : 1).join('/');
+      const lastColon = urlHost.lastIndexOf(':');
+      var urlPort = Number(urlHost.slice(lastColon + 1));
+      urlPort = isNaN(urlPort) ? 443 : urlPort;
       const requestOptions = {
         hostname: urlHost,
-        port: urlPort || 443,
+        port: urlPort,
         path: urlPath || '/',
         ...options,
       };
       if (options.protocol.startsWith('https')) {
+        requestOptions.protocol = 'https:';
         request = httpsRequest(requestOptions, (response) => {
           resolve(response);
         });

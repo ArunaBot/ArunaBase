@@ -1,4 +1,4 @@
-import { ApplicationCommandOption, ApplicationCommandPermissions, ApplicationCommandType } from 'discord.js';
+import { ApplicationCommandOptionType, ApplicationCommandPermissions, ApplicationCommandType, APIApplicationCommandOptionChoice, CategoryChannelType } from 'discord.js';
 import { DiscordClient } from '../discord';
 
 export interface ICommandManagerOptions {
@@ -17,25 +17,32 @@ export interface ICommandParameter {
   description: string;
   name_localizations?: ILocalizationBase;
   description_localizations?: ILocalizationBase;
-  type: ApplicationCommandOption;
+  type: ApplicationCommandOptionType;
   required: boolean;
-  [key: symbol]: ICommandParameter;
-  [key: string]: any;
+  choices?: APIApplicationCommandOptionChoice[];
+  options?: ICommandParameter[];
+  channel_types?: CategoryChannelType[];
+  min_value?: number;
+  max_value?: number;
+  min_length?: number;
+  max_length?: number;
+  autocomplete?: boolean;
 }
 
 export interface ICommandOptions {
-  description: string;
-  name_localizations: ILocalizationBase;
-  description_localizations: ILocalizationBase;
-  isLegacyCommand: boolean;
-  isSlashCommand: boolean;
-  allowDM: boolean;
+  description?: string;
+  name_localizations?: ILocalizationBase;
+  description_localizations?: ILocalizationBase;
+  isLegacyCommand?: boolean;
+  isSlashCommand?: boolean;
+  allowDM?: boolean;
   command: () => void;
   guildID?: string;
   aliases?: string[];
   parameters?: ICommandParameter[];
   permissions?: ApplicationCommandPermissions[];
   type?: ApplicationCommandType;
+  nsfw?: boolean;
 }
 
 export interface IAsyncCommandOptions extends ICommandOptions {

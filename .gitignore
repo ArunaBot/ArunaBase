@@ -1,3 +1,7 @@
+# TestBot Folder
+testbot/*
+testbot/
+
 # Logs
 logs
 *.log
