@@ -1,6 +1,7 @@
 import { IDiscordConfiguration } from '../interfaces';
 import { Client as DJSClient } from 'discord.js';
 import { CommandManager } from './managers';
+import { Utils } from '@twitchapis/twitch.js';
 
 export class DiscordClient extends DJSClient {
   private allowSlashCommands: boolean;
@@ -8,6 +9,7 @@ export class DiscordClient extends DJSClient {
   private commandManager: CommandManager;
   private configuration: IDiscordConfiguration;
   private prefix: string;
+  private logger: Utils.Logger;
 
   constructor(options: IDiscordConfiguration) {
     super(options);
@@ -15,6 +17,12 @@ export class DiscordClient extends DJSClient {
     this.prefix = options.prefix ?? '!';
     this.allowSlashCommands = options.allowSlashCommands ?? true;
     this.allowLegacyCommands = options.allowLegacyCommands ?? true;
+
+    this.logger = new Utils.Logger({
+      prefix: this.prefix,
+      coloredBackground: true,
+      allLineColored: true,
+    });
 
     this.configuration = options;
     this.commandManager = new CommandManager({
@@ -35,6 +43,10 @@ export class DiscordClient extends DJSClient {
 
   public getRawClient(): DJSClient {
     return (this as DJSClient);
+  }
+
+  public getLogger(): Utils.Logger {
+    return this.logger;
   }
 }
 

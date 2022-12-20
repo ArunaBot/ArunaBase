@@ -3,6 +3,7 @@ import { DiscordClient } from '../discord';
 
 export interface ICommandManagerOptions {
   client: DiscordClient;
+  additionalContext?: { [key: symbol]: any };
   prefix?: string;
   allowLegacyCommands?: boolean;
   allowSlashCommands?: boolean;

@@ -1,6 +1,6 @@
 /* eslint-disable quote-props */
+import { IAsyncCommandOptions, ICommandOptions, ICommandParameter, ILocalizationBase, IDiscordCommandContext } from '../../interfaces';
 import { ApplicationCommandOptionType, ApplicationCommandType } from 'discord.js';
-import { IAsyncCommandOptions, ICommandOptions, ICommandParameter, ILocalizationBase } from '../../interfaces';
 
 class CommandStructureBase {
   private name: string;
@@ -135,7 +135,7 @@ class CommandStructureBase {
     // if its a subcommand group, check all subcommands before returning
     if (parameter.type === ApplicationCommandOptionType.SubcommandGroup || parameter.type === ApplicationCommandOptionType.Subcommand) {
       if (parameter.required !== null) delete parameter.required;
-      if (parameter.choices.length > 0) {
+      if (parameter.choices) {
         delete parameter.choices;
         console.warn(`WARNING: Choices are not allowed on subcommands/groups, removed all choices from subcommand/group: ${parameter.name}`);
       }
@@ -226,7 +226,7 @@ class CommandStructureBase {
 }
 
 export class CommandStructure extends CommandStructureBase {
-  protected command: () => void;
+  protected command: (context: IDiscordCommandContext) => void;
 
   constructor(name: string, options: ICommandOptions) {
     super(name, options);
@@ -237,13 +237,13 @@ export class CommandStructure extends CommandStructureBase {
     this.isAsync = false;
   }
 
-  public run(): void {
-    return this.command();
+  public run(context: IDiscordCommandContext): void {
+    return this.command(context);
   }
 }
 
 export class AsyncCommandStructure extends CommandStructure {
-  protected command: () => Promise<void>;
+  protected command: (context: IDiscordCommandContext) => Promise<void>;
 
   constructor(name: string, options: IAsyncCommandOptions) {
     super(name, options);
@@ -254,8 +254,8 @@ export class AsyncCommandStructure extends CommandStructure {
     this.isAsync = true;
   }
 
-  public async run(): Promise<void> {
-    return await this.command();
+  public async run(context: IDiscordCommandContext): Promise<void> {
+    return await this.command(context);
   }
 }
 

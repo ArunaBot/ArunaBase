@@ -1,7 +1,8 @@
 import { IAsyncCommandOptions, ICommandGuildScope, ICommandManagerOptions, ICommandOptions } from '../../interfaces';
 import { CommandStructureBased, CommandStructure, AsyncCommandStructure } from '../structures';
-import { HTTPClient } from '../utils/HTTPClient';
 import { ApplicationCommandType, Collection } from 'discord.js';
+import { CommandListener } from '../listeners';
+import { HTTPClient } from '../utils/HTTPClient';
 
 /**
  * CommandManager is a class responsible for managing and organizing the commands in a Discord bot.
@@ -21,9 +22,9 @@ import { ApplicationCommandType, Collection } from 'discord.js';
  *   }
  * });
  *
- * commandManager.registerGlobalCommand(command);
+ * commandManager.registerCommand(command);
  *
- * // The bot can now execute the ping command in any channel by using the configured prefix
+ * // The bot can now execute the ping command in any channel by using the configured prefix or by using the slash command.
  */
 export class CommandManager {
   /**
@@ -46,6 +47,7 @@ export class CommandManager {
    * @private
    */
   private options: ICommandManagerOptions;
+  private commandListener: CommandListener;
   private httpClient: HTTPClient;
 
   /**
@@ -54,7 +56,11 @@ export class CommandManager {
    */
   constructor(options: ICommandManagerOptions) {
     this.options = options;
+    this.options.allowLegacyCommands = this.options.allowLegacyCommands ?? true;
+    this.options.allowSlashCommands = this.options.allowSlashCommands ?? true;
+    if (!this.options.prefix) this.options.allowLegacyCommands = false;
     this.httpClient = new HTTPClient();
+    this.commandListener = new CommandListener(this.options.client, this.options.allowLegacyCommands, this.options.allowSlashCommands, this.options.additionalContext ?? {});
   }
 
   /**
@@ -75,41 +81,50 @@ export class CommandManager {
   }
 
   /**
-   * Registers a new global command.
+   * Registers a new command.
    * @param {CommandStructureBased} command - The command to register.
-   * @returns {Collection<string, CommandStructureBased>}
-   * @throws {Error} If a command with the same name already exists in the global scope.
+   * @returns {Collection<string | ICommandGuildScope, CommandStructureBased>}
+   * @throws {Error} If a command with the same name already exists in the scope or if discord returns a status code different of 200 or 201.
    */
-  public async registerGlobalCommand(command: CommandStructureBased): Promise<Collection<string, CommandStructureBased>> {
+  public async registerCommand(command: CommandStructureBased): Promise<Collection<string | ICommandGuildScope, CommandStructureBased>> {
     if (!command) throw new Error('Command is not defined');
-    if (this.globalCommands.has(command.getName())) throw new Error(`Command ${command.getName()} already exists in global scope.`);
-    if (!command.isGlobalCommand()) throw new Error(`Command ${command.getName()} is not a global command.`);
-    var commandRegisterSuccessfully = true;
     if (command.isSlash()) {
       // Slash Command
+      if (command.isGlobalCommand() && this.globalCommands.has(command.getName())) throw new Error(`Command ${command.getName()} already exists in global scope.`);
+      // eslint-disable-next-line max-len
+      if (!command.isGlobalCommand() && this.guildCommands.has({ guildID: command.getGuildID(), commandName: command.getName() })) throw new Error(`Command ${command.getName()} already exists in guild scope.`);
+
       const structuredCommand = {
         name: command.getName(),
         type: command.getType(),
         description: command.getDescription(),
         dm_permission: command.isDMAllowed(),
+        guild_id: command.getGuildID(),
         options: command.getParameters(),
       };
+
       if (command.isLocalizedCommand()) {
         const localization = command.getLocalizations();
         if (localization.name_localizations) Object.defineProperty(structuredCommand, 'name_localizations', localization.name_localizations);
         if (localization.name_localizations) Object.defineProperty(structuredCommand, 'description_localizations', localization.description_localizations);
       }
+
       if (command.getParameters().length === 0) delete structuredCommand.options;
+      if (command.isGlobalCommand()) delete structuredCommand.guild_id;
+
       const requestResult = await this.httpClient.post(
         'v10',
-        `applications/${this.options.client.application.id}/commands`,
+        // eslint-disable-next-line max-len
+        command.isGlobalCommand() ? `applications/${this.options.client.application.id}/commands` : `applications/${this.options.client.application.id}/guilds/${command.getGuildID()}/commands`,
         this.options.client.token,
         JSON.stringify(structuredCommand),
       );
-      if (!(requestResult[1] === 201) && !(requestResult[1] === 200)) {
-        commandRegisterSuccessfully = false;
-      }
-      if (!commandRegisterSuccessfully) throw new Error(`Command ${command.getName()} could not be registered.\nStatus code: ${requestResult[1]}\nResponse: ${requestResult[0]}`);
+      const commandRegisterSuccessfully = ((requestResult[1] === 201) || (requestResult[1] === 200));
+
+      // eslint-disable-next-line max-len
+      if (!commandRegisterSuccessfully) throw new Error(`${!command.isGlobalCommand() ? 'Guild ' : ''}Command ${command.getName()} could not be registered.\nStatus code: ${requestResult[1]}\nResponse: ${requestResult[0]}`);
+      // eslint-disable-next-line max-len
+      if (command.isGlobalCommand()) return this.globalCommands.set(command.getName(), command); else return this.guildCommands.set({ guildID: command.getGuildID(), commandName: command.getName() }, command);
     }
     // if it succeeds we set the command internally, otherwise we throw an error and the command is not registered
     return this.globalCommands.set(command.getName(), command);
@@ -133,16 +148,22 @@ export class CommandManager {
   }
 
   /**
-   * Registers a new guild-specific command.
-   * @param {CommandStructureBased} command - The command to register.
-   * @param {string} guildID - The ID of the Discord guild where the command can be used.
-   * @returns {Collection<ICommandGuildScope, CommandStructureBased>}
-   * @throws {Error} If a command with the same name already exists in the specified guild scope.
+   * Gets a command by its name, prioritizing guild-specific commands.
+   * @param {string} name - The name of the command.
+   * @param {string} [guildID] - The ID of the guild to get the command from.
+   * @returns {(CommandStructureBased | null)}
    */
-  public registerGuildCommand(command: CommandStructureBased, guildID: string): Collection<ICommandGuildScope, CommandStructureBased> {
-    if (!command) throw new Error('Command is not defined');
-    if (this.guildCommands.has({ guildID, commandName: command.getName() })) throw new Error(`Command ${command.getName()} already exists in guild scope.`);
-    return this.guildCommands.set({ guildID, commandName: command.getName() }, command);
+  public getCommand(name: string, guildID?: string): CommandStructureBased | null {
+    var command;
+    if (guildID) {
+      command = this.getGuildCommand({ guildID, commandName: name });
+    }
+
+    if (!command) {
+      command = this.getGlobalCommand(name);
+    }
+
+    return command;
   }
 
   /**
@@ -182,5 +203,17 @@ export class CommandManager {
     if (!options.allowDM) options.allowDM = true;
     const command = new AsyncCommandStructure(name, options);
     return command;
+  }
+
+  public getPrefix(): string | null {
+    return this.options.prefix ?? null;
+  }
+
+  public isLegacyCommandEnabled(): boolean {
+    return this.options.allowLegacyCommands ?? false;
+  }
+
+  public isSlashCommandEnabled(): boolean {
+    return this.options.allowSlashCommands ?? false;
   }
 }
