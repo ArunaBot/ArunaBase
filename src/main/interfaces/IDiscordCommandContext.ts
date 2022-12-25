@@ -13,7 +13,7 @@ import {
   User,
   VoiceChannel,
 } from 'discord.js';
-import { DiscordClient } from '../Discord/';
+import { DiscordClient } from '../discord';
 
 export interface IDiscordCommandContext {
   client: DiscordClient;

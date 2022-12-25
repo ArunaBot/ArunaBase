@@ -7,7 +7,7 @@ export class ArunaCoreClient extends ArunaClient {
   constructor(options: IArunaClientConfiguration) {
     if (!options.prefix) options.prefix = 'arunabase';
 
-    super(options.host, options.port, options.prefix, options.logger);
+    super({ host: options.host, port: options.port, logger: options.logger, id: options.prefix });
     this.configuration = options;
   }
 
