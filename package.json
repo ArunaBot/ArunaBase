@@ -6,6 +6,7 @@
   "types": "src/main/index.ts",
   "scripts": {
     "build": "npx tsc -p .",
+    "pdeploy": "node scripts/prepareDeploy.js",
     "eslint": "npx eslint src/main",
     "eslint:fix": "npx eslint src/main --fix",
     "test": "echo \"Error: no test specified\" && exit 1"

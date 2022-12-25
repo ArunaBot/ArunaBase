@@ -1,0 +1,53 @@
+name: Publish API to NPM
+
+on:
+  push:
+    branches:
+      - release
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # Setup .npmrc file to publish to npm
+      - name: Setup .npmrc (NPM)
+        uses: actions/setup-node@v3
+        with:
+          node-version: '12.x'
+          registry-url: 'https://registry.npmjs.org'
+          scope: '@arunabot'
+
+      - name: Enforce npm 8
+        run: npm install -g npm@8.x
+
+      - name: Get Current version
+        id: current_version
+        run: echo ::set-output name=version::$(node -p "require('./package.json').version")
+
+      - name: Get current npm version
+        id: npm_version
+        run: echo ::set-output name=version::$(npm view arunabase version)
+      
+      - name: Compare versions and skip if same
+        id: compare_versions
+        if: ${{ steps.current_version.outputs.version == steps.npm_version.outputs.version }}
+        run: echo ::set-output name=skip::true && echo "Skipping publish as versions are same" && exit 0
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Prepare to publish
+        run: npm run pdeploy
+
+      - name: Publish to npm
+        working-directory: ./build
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
