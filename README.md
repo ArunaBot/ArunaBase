@@ -1,17 +1,17 @@
-[<img width="100%" src="/.github/assets/mainBanner.png">](https://github.com/arunaBot/arunaBase)
-<center>
+<!-- [<img width="100%" src="/.github/assets/mainBanner.png">](https://github.com/arunaBot/arunaBase) -->
+<p align="center">
 <a href="https://www.npmjs.com/package/arunabase"><img src="https://img.shields.io/npm/v/arunabase.svg?style=for-the-badge&maxAge=3600"></a>
 <a href="https://discord.gg/NqbBgEf" target="_blank"><img src="https://img.shields.io/discord/660610178009530380?color=5865F2&label=&logo=Discord&logoColor=white&style=for-the-badge"></a>
 <a href=""><img src="https://img.shields.io/github/license/arunabot/arunabase?style=for-the-badge&color=0394fc&label=Licen%C3%A7a"></a>
-</center>
+</p>
 
 #
 
-<center><a href='https://github.com/arunabot/arunabase/.github/assets/translation/readme-enUS.md'>📘 English Readme</a> | <span>📕 Readme em português</span></center>
+<p align="center"><a href='https://github.com/ArunaBot/ArunaBase/blob/main/.github/translation/readme-enUS.md'>📘 English Readme</a> | <span>📕 Readme em português</span></p>
 
 #
 
-<center><h2>📖 Sobre</h2></center>
+<p align="center"><h2>📖 Sobre</h2></p>
 &nbsp;&nbsp;&nbsp;&nbsp;A ArunaBase é uma base de código de API para bots do Discord, Twitch, e outras plataformas, feita em TypeScript, com o objetivo de facilitar a criação de bots, com uma estrutura simples e organizada, além de ser totalmente gratuita e de código aberto.
 
 <br>
@@ -20,7 +20,7 @@
 
 <br>
 
-<center><h2>💻 Instalação</h2></center>
+<p align="center"><h2>💻 Instalação</h2></p>
 &nbsp;&nbsp;&nbsp;&nbsp;Para instalar a ArunaBase no seu projeto, você precisa ter o NodeJS instalado, e então executar o seguinte comando no seu terminal:
 
 <br>
@@ -39,12 +39,12 @@ yarn add arunabase
 
 <br>
 
-<center><h2>⌨ Exemplo de uso</h2></center>
+<p align="center"><h2>⌨ Exemplo de uso</h2></p>
 &nbsp;&nbsp;&nbsp;&nbsp;Para usar a ArunaBase em seu projeto, você precisa importar uma das classes que ela exporta, e então criar uma instância da classe que você importou, passando como parâmetro um objeto com as configurações do seu bot.
 
 <br>
 
-<center><h2>🗨 Exemplo de uso com o Discord</h2></center>
+<p align="center"><h2>🗨 Exemplo de uso com o Discord</h2></p>
 
 <br>
 
@@ -73,7 +73,7 @@ client.login('<Token do bot>');
 
 <br>
 
-<center><h2>📄 Licença</h2></center>
+<p align="center"><h2>📄 Licença</h2></p>
 
 <br>
 
@@ -81,7 +81,7 @@ client.login('<Token do bot>');
 
 <br>
 
-<center><h2>🤝 Contribuições</h2></center>
+<p align="center"><h2>🤝 Contribuições</h2></p>
 
 <br>
 
@@ -95,11 +95,11 @@ client.login('<Token do bot>');
 
 <br>
 
-<center><h2>😉 Autores</h2></center>
+<p align="center"><h2>😉 Autores</h2></p>
 
 <br>
 
-<center>
+<p align="center">
 <table>
   <tr>
     <td align="center">
@@ -122,9 +122,10 @@ client.login('<Token do bot>');
     </td>
   </tr>
 </table>
-</center>
+</p>
 
 #
 
-<center>Feito com 💚 pela equipe da Aruna™.</center>
-<center>Todos os direitos reservados.</center>
+<p align="center">Feito com 💚 pela equipe da Aruna™.</p>
+<br>
+<p align="center">Todos os direitos reservados.</p>

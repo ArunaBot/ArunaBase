@@ -1,17 +1,17 @@
-[<img width="100%" src="/.github/assets/mainBanner.png">](https://github.com/arunaBot/arunaBase)
-<center>
+<!-- [<img width="100%" src="/.github/assets/mainBanner.png">](https://github.com/arunaBot/arunaBase) -->
+<p align="center">
 <a href="https://www.npmjs.com/package/arunabase"><img src="https://img.shields.io/npm/v/arunabase.svg?style=for-the-badge&maxAge=3600"></a>
 <a href="https://discord.gg/NqbBgEf" target="_blank"><img src="https://img.shields.io/discord/660610178009530380?color=5865F2&label=&logo=Discord&logoColor=white&style=for-the-badge"></a>
 <a href=""><img src="https://img.shields.io/github/license/arunabot/arunabase?style=for-the-badge&color=0394fc"></a>
-</center>
+</p>
 
 #
 
-<center><span>📘 English Readme</span> | <a href="https://github.com/arunabot/arunabase#readme">📕 Readme em português</a></center>
+<p align="center"><span>📘 English Readme</span> | <a href="https://github.com/arunabot/arunabase#readme">📕 Readme em português</a></p>
 
 #
 
-<center><h2>📖 About</h2></center>
+<p align="center"><h2>📖 About</h2></p>
 &nbsp;&nbsp;&nbsp;&nbsp;The ArunaBase is a API code base for Discord, Twitch, and other platforms bots, made in TypeScript, with the objective of making ease the bot creation, with a simple and organized structure, other than being completely free and open source.
 
 <br>
@@ -20,7 +20,7 @@
 
 <br>
 
-<center><h2>💻 Installing</h2></center>
+<p align="center"><h2>💻 Installing</h2></p>
 &nbsp;&nbsp;&nbsp;&nbsp;To install ArunaBase in your project, you need first to have NodeJS installed, then run the following command in your terminal:
 
 <br>
@@ -39,12 +39,12 @@ yarn add arunabase
 
 <br>
 
-<center><h2>⌨ Use example</h2></center>
+<p align="center"><h2>⌨ Use example</h2></p>
 &nbsp;&nbsp;&nbsp;&nbsp;To use ArunaBase in your project, you need to import one of the classes that it exports, then create an instance of that class, passing as parameter your bot configurations as an object.
 
 <br>
 
-<center><h2>🗨 Use example with Discord</h2></center>
+<p align="center"><h2>🗨 Use example with Discord</h2></p>
 
 <br>
 
@@ -73,7 +73,7 @@ client.login('<Bot token>');
 
 <br>
 
-<center><h2>📄 License</h2></center>
+<p align="center"><h2>📄 License</h2></p>
 
 <br>
 
@@ -81,7 +81,7 @@ client.login('<Bot token>');
 
 <br>
 
-<center><h2>🤝 Contributing</h2></center>
+<p align="center"><h2>🤝 Contributing</h2></p>
 
 <br>
 
@@ -95,11 +95,11 @@ client.login('<Bot token>');
 
 <br>
 
-<center><h2>😉 Authors</h2></center>
+<p align="center"><h2>😉 Authors</h2></p>
 
 <br>
 
-<center>
+<p align="center">
 <table>
   <tr>
     <td align="center">
@@ -122,9 +122,10 @@ client.login('<Bot token>');
     </td>
   </tr>
 </table>
-</center>
+</p>
 
 #
 
-<center>Made with 💚 By Aruna™'s team.</center>
-<center>All Reserved Rights.</center>
+<p align="center">Made with 💚 By Aruna™'s team.</p>
+<br>
+<p align="center">All Reserved Rights.</p>
