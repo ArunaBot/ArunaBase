@@ -1,5 +1,5 @@
-export * from './Client';
+export * from './structures/';
 export * from './listeners/';
 export * from './managers/';
-export * from './structures/';
-export * as Utils from './utils/';
+export * from './Client';
+export * from './utils/';
