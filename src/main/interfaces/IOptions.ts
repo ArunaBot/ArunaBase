@@ -1,4 +1,5 @@
 import { ApplicationCommandOptionType, ApplicationCommandPermissions, ApplicationCommandType, APIApplicationCommandOptionChoice, CategoryChannelType } from 'discord.js';
+import { IDiscordCommandContext } from './IDiscordCommandContext';
 import { DiscordClient } from '../discord';
 
 export interface ICommandManagerOptions {
@@ -37,7 +38,7 @@ export interface ICommandOptions {
   isLegacyCommand?: boolean;
   isSlashCommand?: boolean;
   allowDM?: boolean;
-  command: () => void;
+  command: (context: IDiscordCommandContext) => void;
   guildID?: string;
   aliases?: string[];
   parameters?: ICommandParameter[];
@@ -47,5 +48,5 @@ export interface ICommandOptions {
 }
 
 export interface IAsyncCommandOptions extends ICommandOptions {
-  command: () => Promise<void>;
+  command: (context: IDiscordCommandContext) => Promise<void>;
 }
