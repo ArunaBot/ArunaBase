@@ -1,5 +1,5 @@
+import { ClientOptions, Client as DJSClient } from 'discord.js';
 import { IDiscordConfiguration } from '../interfaces';
-import { Client as DJSClient } from 'discord.js';
 import { CommandManager } from './managers';
 import { Utils } from '@twitchapis/twitch.js';
 
@@ -12,7 +12,7 @@ export class DiscordClient extends DJSClient {
   private logger: Utils.Logger;
 
   constructor(options: IDiscordConfiguration) {
-    super(options);
+    super(options as ClientOptions);
 
     this.prefix = options.prefix ?? '!';
     this.allowSlashCommands = options.allowSlashCommands ?? true;
@@ -47,6 +47,16 @@ export class DiscordClient extends DJSClient {
 
   public getLogger(): Utils.Logger {
     return this.logger;
+  }
+
+  public login(token?: string): Promise<string> {
+    if (token) {
+      return super.login(token);
+    } else if (this.configuration.token) {
+      return super.login(this.configuration.token);
+    } else {
+      throw new Error('No token provided.');
+    }
   }
 }
 

@@ -22,8 +22,8 @@ class CommandStructureBase {
   constructor(name: string, options: ICommandOptions) {
     this.name = name;
     this.description = options.description;
-    this.isSlashCommand = options.isSlashCommand;
-    this.isLegacyCommand = options.isLegacyCommand;
+    this.isSlashCommand = options.isSlashCommand ?? true;
+    this.isLegacyCommand = options.isLegacyCommand ?? true;
     this.allowDM = options.allowDM ?? true;
     this.aliases = options.aliases ?? [];
     this.type = options.type ?? ApplicationCommandType.ChatInput; // Slash Commands only
