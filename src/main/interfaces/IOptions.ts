@@ -1,9 +1,11 @@
 import { ApplicationCommandOptionType, ApplicationCommandPermissions, ApplicationCommandType, APIApplicationCommandOptionChoice, CategoryChannelType } from 'discord.js';
 import { IDiscordCommandContext } from './IDiscordCommandContext';
+import { Utils } from '@twitchapis/twitch.js';
 import { DiscordClient } from '../discord';
 
 export interface ICommandManagerOptions {
   client: DiscordClient;
+  logger: Utils.Logger;
   additionalContext?: { [key: symbol]: any };
   prefix?: string;
   allowLegacyCommands?: boolean;
@@ -38,7 +40,7 @@ export interface ICommandOptions {
   isLegacyCommand?: boolean;
   isSlashCommand?: boolean;
   allowDM?: boolean;
-  command: (context: IDiscordCommandContext) => void;
+  command?: (context: IDiscordCommandContext) => void;
   guildID?: string;
   aliases?: string[];
   parameters?: ICommandParameter[];
@@ -48,5 +50,5 @@ export interface ICommandOptions {
 }
 
 export interface IAsyncCommandOptions extends ICommandOptions {
-  command: (context: IDiscordCommandContext) => Promise<void>;
+  command?: (context: IDiscordCommandContext) => Promise<void>;
 }
