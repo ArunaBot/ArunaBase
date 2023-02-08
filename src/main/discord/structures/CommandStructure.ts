@@ -18,6 +18,7 @@ class CommandStructureBase {
   protected parameters: ICommandParameter[];
   protected type: number;
   protected nsfw: boolean;
+  protected slashId: string;
 
   constructor(name: string, options: ICommandOptions) {
     this.name = name;
@@ -194,6 +195,16 @@ class CommandStructureBase {
 
   public getParameters(): ICommandParameter[] {
     return this.parameters;
+  }
+
+  public getSlashId(): string {
+    return this.slashId;
+  }
+
+  public setSlashId(id: string): void {
+    if (!this.isSlashCommand) throw new Error('Cannot set slash ID on a non slash command');
+    if (this.slashId) throw new Error('Slash ID is already set');
+    this.slashId = id;
   }
 
   public isAsyncCommand(): boolean {
