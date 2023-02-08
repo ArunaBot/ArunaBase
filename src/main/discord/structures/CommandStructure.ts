@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable quote-props */
 import { IAsyncCommandOptions, ICommandOptions, ICommandParameter, ILocalizationBase, IDiscordCommandContext } from '../../interfaces';
 import { ApplicationCommandOptionType, ApplicationCommandType } from 'discord.js';
@@ -18,6 +19,7 @@ class CommandStructureBase {
   protected parameters: ICommandParameter[];
   protected type: number;
   protected nsfw: boolean;
+  protected slashId: string;
 
   constructor(name: string, options: ICommandOptions) {
     this.name = name;
@@ -196,6 +198,16 @@ class CommandStructureBase {
     return this.parameters;
   }
 
+  public getSlashId(): string {
+    return this.slashId;
+  }
+
+  public setSlashId(id: string): void {
+    if (!this.isSlashCommand) throw new Error('Cannot set slash ID on a non slash command');
+    if (this.slashId) throw new Error('Slash ID is already set');
+    this.slashId = id;
+  }
+
   public isAsyncCommand(): boolean {
     return this.isAsync;
   }
@@ -226,36 +238,38 @@ class CommandStructureBase {
 }
 
 export class CommandStructure extends CommandStructureBase {
-  protected command: (context: IDiscordCommandContext) => void;
-
   constructor(name: string, options: ICommandOptions) {
     super(name, options);
 
-    if (!options.command) throw new Error('Command is not defined');
+    if (options.command !== null) this.execute = options.command;
 
-    this.command = options.command;
     this.isAsync = false;
   }
 
   public run(context: IDiscordCommandContext): void {
-    return this.command(context);
+    return this.execute(context);
+  }
+
+  protected execute(context: IDiscordCommandContext): void {
+    throw new Error('Method not implemented.');
   }
 }
 
 export class AsyncCommandStructure extends CommandStructure {
-  protected command: (context: IDiscordCommandContext) => Promise<void>;
-
   constructor(name: string, options: IAsyncCommandOptions) {
     super(name, options);
 
-    if (!options.command) throw new Error('Command is not defined');
+    if (options.command !== null) this.execute = options.command;
 
-    this.command = options.command;
     this.isAsync = true;
   }
 
   public async run(context: IDiscordCommandContext): Promise<void> {
-    return await this.command(context);
+    return await this.execute(context);
+  }
+
+  protected override async execute(context: IDiscordCommandContext): Promise<void> {
+    throw new Error('Method not implemented.');
   }
 }
 

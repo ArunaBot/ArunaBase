@@ -27,6 +27,7 @@ export class DiscordClient extends DJSClient {
     this.configuration = options;
     this.commandManager = new CommandManager({
       client: this,
+      logger: this.logger,
       prefix: this.prefix,
       allowLegacyCommands: this.allowLegacyCommands,
       allowSlashCommands: this.allowSlashCommands,

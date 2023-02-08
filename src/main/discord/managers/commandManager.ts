@@ -86,21 +86,21 @@ export class CommandManager {
    * @returns {Collection<string | ICommandGuildScope, CommandStructureBased>}
    * @throws {Error} If a command with the same name already exists in the scope or if discord returns a status code different of 200 or 201.
    */
-  public async registerCommand(command: CommandStructureBased): Promise<Collection<string | ICommandGuildScope, CommandStructureBased>> {
-    if (!command) throw new Error('Command is not defined');
+  public async registerCommand(command: CommandStructureBased): Promise<CommandStructureBased> {
+    if (!command) throw new Error('CommandManager: Command is not defined.');
+    if (!this.options.client.isReady()) {
+      throw new Error('CommandManager: Tryed to register a command before the client is ready. ' + command.getName());
+    }
+    if (command.isGlobalCommand() && this.globalCommands.has(command.getName())) throw new Error(`Command ${command.getName()} already exists in global scope.`);
+    // eslint-disable-next-line max-len
+    if (!command.isGlobalCommand() && this.guildCommands.has({ guildID: command.getGuildID(), commandName: command.getName() })) throw new Error(`Command ${command.getName()} already exists in guild scope.`);
     if (command.isSlash()) {
       // Slash Command
-      if (command.isGlobalCommand() && this.globalCommands.has(command.getName())) throw new Error(`Command ${command.getName()} already exists in global scope.`);
-      // eslint-disable-next-line max-len
-      if (!command.isGlobalCommand() && this.guildCommands.has({ guildID: command.getGuildID(), commandName: command.getName() })) throw new Error(`Command ${command.getName()} already exists in guild scope.`);
-
       const structuredCommand = {
         name: command.getName(),
         type: command.getType(),
         description: command.getDescription(),
         dm_permission: command.isDMAllowed(),
-        guild_id: command.getGuildID(),
-        options: command.getParameters(),
       };
 
       if (command.isLocalizedCommand()) {
@@ -109,8 +109,8 @@ export class CommandManager {
         if (localization.name_localizations) Object.defineProperty(structuredCommand, 'description_localizations', localization.description_localizations);
       }
 
-      if (command.getParameters().length === 0) delete structuredCommand.options;
-      if (command.isGlobalCommand()) delete structuredCommand.guild_id;
+      if (command.getParameters().length > 0) Object.defineProperty(structuredCommand, 'options', command.getParameters());
+      if (!command.isGlobalCommand()) Object.defineProperty(structuredCommand, 'guild_id', command.getGuildID());
 
       const requestResult = await this.httpClient.post(
         'v10',
@@ -123,11 +123,38 @@ export class CommandManager {
 
       // eslint-disable-next-line max-len
       if (!commandRegisterSuccessfully) throw new Error(`${!command.isGlobalCommand() ? 'Guild ' : ''}Command ${command.getName()} could not be registered.\nStatus code: ${requestResult[1]}\nResponse: ${requestResult[0]}`);
-      // eslint-disable-next-line max-len
-      if (command.isGlobalCommand()) return this.globalCommands.set(command.getName(), command); else return this.guildCommands.set({ guildID: command.getGuildID(), commandName: command.getName() }, command);
+      const responseJson = JSON.parse(requestResult[0]);
+      command.setSlashId(responseJson.id);
     }
-    // if it succeeds we set the command internally, otherwise we throw an error and the command is not registered
-    return this.globalCommands.set(command.getName(), command);
+    // eslint-disable-next-line max-len
+    if (command.isGlobalCommand()) this.globalCommands.set(command.getName(), command); else this.guildCommands.set({ guildID: command.getGuildID(), commandName: command.getName() }, command);
+    return command;
+  }
+
+  public async unregisterCommand(command: CommandStructureBased): Promise<boolean> {
+    if (!command) throw new Error('CommandManager: Command is not defined.');
+    if (!this.options.client.isReady()) throw new Error('CommandManager: Tryed to unregister a command before the client is ready. ' + command.getName());
+    if (command.isGlobalCommand() && !this.globalCommands.has(command.getName())) throw new Error(`Command ${command.getName()} does not exists in global scope.`);
+    // eslint-disable-next-line max-len
+    if (!command.isGlobalCommand() && !this.guildCommands.has({ guildID: command.getGuildID(), commandName: command.getName() })) throw new Error(`Command ${command.getName()} does not exists in guild scope.`);
+    if (command.isSlash()) {
+      const requestResult = await this.httpClient.delete(
+        'v10',
+        // eslint-disable-next-line max-len
+        command.isGlobalCommand() ? `applications/${this.options.client.application.id}/commands/${command.getSlashId()}` : `applications/${this.options.client.application.id}/guilds/${command.getGuildID()}/commands/${command.getSlashId()}`,
+        this.options.client.token,
+      );
+      const commandUnregisterSuccessfully = (requestResult[1] === 204);
+
+      // eslint-disable-next-line max-len
+      if (!commandUnregisterSuccessfully) throw new Error(`${!command.isGlobalCommand() ? 'Guild ' : ''}Command ${command.getName()} could not be unregistered.\nStatus code: ${requestResult[1]}\nResponse: ${requestResult[0]}`);
+    }
+
+    if (command.isGlobalCommand()) {
+      return this.globalCommands.delete(command.getName());
+    } else {
+      return this.guildCommands.delete({ guildID: command.getGuildID(), commandName: command.getName() });
+    }
   }
 
   /**
