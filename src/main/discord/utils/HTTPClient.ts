@@ -1,13 +1,9 @@
-import { IncomingMessage } from 'http';
 import { HTTPClientBase } from '../../http';
 
 export class HTTPClient extends HTTPClientBase {
-  /**
-   * post
-   */
-  public async post(version: string, path: string, token: string, body: any = null): Promise<[string | null, number]> {
+  private async makeRequest(method: string, version: string, path: string, token: string, body: any = null): Promise<[string | null, number]> {
     const request = await this.sendRequest(`https://discord.com/api/${version}/${path}`, {
-      method: 'POST',
+      method: method.toUpperCase(),
       protocol: 'https',
       headers: {
         Authorization: `Bot ${token}`,
@@ -28,32 +24,23 @@ export class HTTPClient extends HTTPClientBase {
   }
 
   /**
+   * post
+   */
+  public async post(version: string, path: string, token: string, body: any = null): Promise<[string | null, number]> {
+    return this.makeRequest('POST', version, path, token, body);
+  }
+
+  /**
    * delete
    */
-  public delete(version: string, path: string, token: string, body: any = null): Promise<IncomingMessage> {
-    return this.sendRequest(`https://discord.com/api/${version}/${path}`, {
-      method: 'DELETE',
-      protocol: 'https',
-      headers: {
-        Authorization: `Bot ${token}`,
-        'Content-Type': 'application/json',
-      },
-      body,
-    });
+  public async delete(version: string, path: string, token: string, body: any = null): Promise<[string | null, number]> {
+    return this.makeRequest('DELETE', version, path, token, body);
   }
 
   /**
    * patch
    */
-  public patch(version: string, path: string, token: string, body: any = null): Promise<IncomingMessage> {
-    return this.sendRequest(`https://discord.com/api/${version}/${path}`, {
-      method: 'PATCH',
-      protocol: 'https',
-      headers: {
-        Authorization: `Bot ${token}`,
-        'Content-Type': 'application/json',
-      },
-      body,
-    });
+  public async patch(version: string, path: string, token: string, body: any = null): Promise<[string | null, number]> {
+    return this.makeRequest('PATCH', version, path, token, body);
   }
 }
