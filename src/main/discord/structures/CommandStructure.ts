@@ -241,7 +241,7 @@ export class CommandStructure extends CommandStructureBase {
   constructor(name: string, options: ICommandOptions) {
     super(name, options);
 
-    if (options.command !== null) this.execute = options.command;
+    if (options.command) this.execute = options.command;
 
     this.isAsync = false;
   }
@@ -259,7 +259,7 @@ export class AsyncCommandStructure extends CommandStructure {
   constructor(name: string, options: IAsyncCommandOptions) {
     super(name, options);
 
-    if (options.command !== null) this.execute = options.command;
+    if (options.command) this.execute = options.command;
 
     this.isAsync = true;
   }

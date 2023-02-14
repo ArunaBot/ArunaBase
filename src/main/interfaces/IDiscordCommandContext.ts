@@ -1,4 +1,5 @@
 import {
+  BooleanCache,
   CommandInteraction,
   DMChannel,
   Guild,
@@ -17,9 +18,11 @@ import { DiscordClient } from '../discord';
 
 export interface IDiscordCommandContext {
   client: DiscordClient;
-  reply: (content: string | any) => Promise<void> | Promise<InteractionResponse<boolean>>;
-  discreteReply: (content: string | any) => Promise<void> | Promise<InteractionResponse<boolean>>;
-  args: (string | number | boolean)[];
+  reply: (content: string | any) => Promise<void> | Promise<Message<boolean>> | Promise<InteractionResponse<boolean>>;
+  editReply: (content: string | any) => Promise<void> | Promise<Message<boolean>> | Promise<Message<BooleanCache<any>>>;
+  discreteReply: (content: string | any) => Promise<void> | Promise<Message<boolean>> | Promise<InteractionResponse<boolean>>;
+  messageReplyContent?: any,
+  args: (string | number | boolean | User)[];
   author: User;
   member?: GuildMember;
   guild?: Guild;

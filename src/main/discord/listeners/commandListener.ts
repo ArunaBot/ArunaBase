@@ -1,4 +1,4 @@
-import { Interaction, Message, CommandInteraction, GuildMember, InteractionResponse } from 'discord.js';
+import { Interaction, Message, CommandInteraction, GuildMember, InteractionResponse, BooleanCache } from 'discord.js';
 import { IDiscordCommandContext } from '../../interfaces';
 import { AsyncCommandStructure, CommandStructure } from '../structures';
 import { DiscordClient } from '../Client';
@@ -14,8 +14,8 @@ export class CommandListener {
     this.additionalContext = additionalContext ?? {};
   }
 
-  private onMessage(message: Message): void {
-    if (message.author.bot) return;
+  private async onMessage(message: Message): Promise<void> {
+    if (message.author.bot || !message.content) return;
     const prefix = this.client.getCommandManager().getPrefix();
     if (!message.content.startsWith(prefix)) return;
     const args = message.content.slice(prefix.length).trim().split(/ +/);
@@ -26,18 +26,33 @@ export class CommandListener {
       channel: message.channel,
       member: message.member,
       author: message.author,
-      reply: message.reply.bind(message),
+      messageReplyContent: null,
+      reply: async (content: any): Promise<Message<boolean>> => {
+        return new Promise((resolve, reject) => {
+          message.reply(content).then((result) => {
+            context.messageReplyContent = result;
+            return resolve(result);
+          }).catch((reason) => {
+            return reject(reason);
+          });
+        });
+      },
+      editReply: async (content: any): Promise<Message> => { return (context.messageReplyContent as Message<boolean>).edit(content); },
       discreteReply: message.reply.bind(message),
       args,
       message,
     };
-    this.executeCommand(commandName, context);
+    try {
+      await this.executeCommand(commandName, context);
+    } catch (error) {
+      this.client.getLogger().error('An error ocurred while execute command ' + commandName + '.\nError:', error);
+    }
   }
 
-  private onInteractionCreate(interaction: Interaction): void {
+  private async onInteractionCreate(interaction: Interaction): Promise<void> {
     if (!interaction.isCommand()) return;
     const ctx = interaction as CommandInteraction;
-    const name = ctx.commandName;
+    const commandName = ctx.commandName;
     const context: IDiscordCommandContext = {
       client: this.client,
       guild: ctx.guild,
@@ -46,14 +61,18 @@ export class CommandListener {
       author: ctx.user,
       args: ctx.options.data.map((arg) => arg.value),
       reply: async (content: any): Promise<InteractionResponse<boolean>> => { return await ctx.reply({ content }); },
+      editReply: async (content: any): Promise<Message<BooleanCache<any>>> => { return await ctx.editReply({ content }); },
       discreteReply: async (content: any): Promise<InteractionResponse<boolean>> => { return await ctx.reply({ content, ephemeral: true }); },
       interaction: ctx,
     };
     try {
-      this.executeCommand(name, context);
+      await this.executeCommand(commandName, context);
     } catch (error) {
-      ctx.reply({ content: 'An error ocurred while execute command ' + name + '.', ephemeral: true });
-      this.client.getLogger().error('An error ocurred while execute command ' + name + '.\nError:', error);
+      const errorMessage = 'An error ocurred while execute command ' + commandName + '.';
+      if (!ctx.replied) {
+        ctx.reply({ content: errorMessage, ephemeral: true });
+      }
+      this.client.getLogger().error(errorMessage + '\nError:', error);
     }
   }
 
