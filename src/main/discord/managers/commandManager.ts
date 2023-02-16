@@ -1,4 +1,4 @@
-import { IAsyncCommandOptions, ICommandGuildScope, ICommandManagerOptions, ICommandOptions } from '../../interfaces';
+import { IAsyncCommandOptions, ICommandGuildScope, ICommandManagerOptions, ICommandOptions, ICommandParameter, StructuredCommand } from '../../interfaces';
 import { CommandStructureBased, CommandStructure, AsyncCommandStructure } from '../structures';
 import { ApplicationCommandType, Collection } from 'discord.js';
 import { CommandListener } from '../listeners';
@@ -96,7 +96,7 @@ export class CommandManager {
     if (!command.isGlobalCommand() && this.guildCommands.has({ guildID: command.getGuildID(), commandName: command.getName() })) throw new Error(`Command ${command.getName()} already exists in guild scope.`);
     if (command.isSlash()) {
       // Slash Command
-      const structuredCommand = {
+      const structuredCommand: StructuredCommand = {
         name: command.getName(),
         type: command.getType(),
         description: command.getDescription(),
@@ -105,12 +105,12 @@ export class CommandManager {
 
       if (command.isLocalizedCommand()) {
         const localization = command.getLocalizations();
-        if (localization.name_localizations) Object.defineProperty(structuredCommand, 'name_localizations', localization.name_localizations);
-        if (localization.name_localizations) Object.defineProperty(structuredCommand, 'description_localizations', localization.description_localizations);
+        if (localization.name_localizations) structuredCommand['name_localizations'] = localization.name_localizations;
+        if (localization.name_localizations) structuredCommand['description_localizations'] = localization.description_localizations;
       }
 
-      if (command.getParameters().length > 0) Object.defineProperty(structuredCommand, 'options', command.getParameters());
-      if (!command.isGlobalCommand()) Object.defineProperty(structuredCommand, 'guild_id', command.getGuildID());
+      if (command.getParameters().length > 0) structuredCommand['options'] = command.getParameters();
+      if (!command.isGlobalCommand()) structuredCommand['guild_id'] = command.getGuildID();
 
       const requestResult = await this.httpClient.post(
         'v10',

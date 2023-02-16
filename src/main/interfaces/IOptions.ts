@@ -52,3 +52,14 @@ export interface ICommandOptions {
 export interface IAsyncCommandOptions extends ICommandOptions {
   command?: (context: IDiscordCommandContext) => Promise<void>;
 }
+
+export interface StructuredCommand {
+  name: string;
+  type: ApplicationCommandType;
+  description: string;
+  dm_permission: boolean;
+  name_localizations?: Record<string, string>;
+  description_localizations?: Record<string, string>;
+  options?: ICommandParameter[];
+  guild_id?: string;
+}
