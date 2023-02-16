@@ -1,4 +1,5 @@
-import { IAsyncCommandOptions, ICommandGuildScope, ICommandManagerOptions, ICommandOptions, ICommandParameter, StructuredCommand } from '../../interfaces';
+/* eslint-disable dot-notation */
+import { IAsyncCommandOptions, ICommandGuildScope, ICommandManagerOptions, ICommandOptions, StructuredCommand } from '../../interfaces';
 import { CommandStructureBased, CommandStructure, AsyncCommandStructure } from '../structures';
 import { ApplicationCommandType, Collection } from 'discord.js';
 import { CommandListener } from '../listeners';
@@ -126,8 +127,10 @@ export class CommandManager {
       const responseJson = JSON.parse(requestResult[0]);
       command.setSlashId(responseJson.id);
     }
-    // eslint-disable-next-line max-len
-    if (command.isGlobalCommand()) this.globalCommands.set(command.getName(), command); else this.guildCommands.set({ guildID: command.getGuildID(), commandName: command.getName() }, command);
+
+    if (command.isGlobalCommand()) this.globalCommands.set(command.getName(), command);
+    else this.guildCommands.set({ guildID: command.getGuildID(), commandName: command.getName() }, command);
+
     return command;
   }
 
