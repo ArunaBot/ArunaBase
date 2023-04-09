@@ -31,12 +31,19 @@ class CommandStructureBase {
     this.type = options.type ?? ApplicationCommandType.ChatInput; // Slash Commands only
     this.nsfw = options.nsfw ?? false;
 
+    this.aliases.unshift(this.name);
+
     if (options.name_localizations || options.description_localizations) {
       this.isLocalized = true;
       this.localizations = {
-        'name_localizations': options.name_localizations,
-        'description_localizations': options.description_localizations,
+        'name_localizations': options.name_localizations ?? {},
+        'description_localizations': options.description_localizations ?? {},
       };
+      if (options.name_localizations) {
+        Object.values(options.name_localizations).forEach((aliase) => {
+          if (aliase !== this.name) this.aliases.push(aliase);
+        });
+      }
     } else {
       this.isLocalized = false;
       this.localizations = null;

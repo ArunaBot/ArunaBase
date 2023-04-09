@@ -30,10 +30,10 @@ import { HTTPClient } from '../utils/HTTPClient';
 export class CommandManager {
   /**
    * A collection of commands that can be used in any Discord guild.
-   * @type {Collection<string, CommandStructureBased>}
+   * @type {Collection<string[], CommandStructureBased>}
    * @private
    */
-  private globalCommands: Collection<string, CommandStructureBased> = new Collection();
+  private globalCommands: Collection<string[], CommandStructureBased> = new Collection();
 
   /**
    * A collection of commands that can only be used in specific Discord guilds.
@@ -66,9 +66,9 @@ export class CommandManager {
 
   /**
    * Gets the collection of global commands.
-   * @returns {Collection<string, CommandStructureBased>}
+   * @returns {Collection<string[], CommandStructureBased>}
    */
-  public getGlobalCommands(): Collection<string, CommandStructureBased> {
+  public getGlobalCommands(): Collection<string[], CommandStructureBased> {
     return this.globalCommands;
   }
 
@@ -78,7 +78,15 @@ export class CommandManager {
    * @returns {(CommandStructureBased | null)}
    */
   public getGlobalCommand(name: string): CommandStructureBased | null {
-    return this.globalCommands.get(name) || null;
+    return this.globalCommands.find((value, key) => key.includes(name)) ?? null;
+  }
+
+  public hasGlobalCommand(name: string | string[]): boolean {
+    if (name instanceof Array) {
+      return this.globalCommands.has(name);
+    } else {
+      return !!this.globalCommands.find((value, key) => key.includes(name));
+    }
   }
 
   /**
@@ -92,9 +100,9 @@ export class CommandManager {
     if (!this.options.client.isReady()) {
       throw new Error('CommandManager: Tryed to register a command before the client is ready. ' + command.getName());
     }
-    if (command.isGlobalCommand() && this.globalCommands.has(command.getName())) throw new Error(`Command ${command.getName()} already exists in global scope.`);
+    if (command.isGlobalCommand() && this.hasGlobalCommand(command.getAliases())) throw new Error(`Command ${command.getName()} already exists in global scope.`);
     // eslint-disable-next-line max-len
-    if (!command.isGlobalCommand() && this.guildCommands.has({ guildID: command.getGuildID(), commandName: command.getName() })) throw new Error(`Command ${command.getName()} already exists in guild scope.`);
+    if (!command.isGlobalCommand() && this.guildCommands.has({ guildID: command.getGuildID(), commandAliases: command.getAliases() })) throw new Error(`Command ${command.getName()} already exists in guild scope.`);
     if (command.isSlash()) {
       // Slash Command
       const structuredCommand: StructuredCommand = {
@@ -124,12 +132,12 @@ export class CommandManager {
 
       // eslint-disable-next-line max-len
       if (!commandRegisterSuccessfully) throw new Error(`${!command.isGlobalCommand() ? 'Guild ' : ''}Command ${command.getName()} could not be registered.\nStatus code: ${requestResult[1]}\nResponse: ${requestResult[0]}`);
-      const responseJson = JSON.parse(requestResult[0]);
+      const responseJson = JSON.parse(requestResult[0]!);
       command.setSlashId(responseJson.id);
     }
 
-    if (command.isGlobalCommand()) this.globalCommands.set(command.getName(), command);
-    else this.guildCommands.set({ guildID: command.getGuildID(), commandName: command.getName() }, command);
+    if (command.isGlobalCommand()) this.globalCommands.set(command.getAliases(), command);
+    else this.guildCommands.set({ guildID: command.getGuildID(), commandAliases: command.getAliases() }, command);
 
     return command;
   }
@@ -137,9 +145,9 @@ export class CommandManager {
   public async unregisterCommand(command: CommandStructureBased): Promise<boolean> {
     if (!command) throw new Error('CommandManager: Command is not defined.');
     if (!this.options.client.isReady()) throw new Error('CommandManager: Tryed to unregister a command before the client is ready. ' + command.getName());
-    if (command.isGlobalCommand() && !this.globalCommands.has(command.getName())) throw new Error(`Command ${command.getName()} does not exists in global scope.`);
+    if (command.isGlobalCommand() && !this.hasGlobalCommand(command.getAliases())) throw new Error(`Command ${command.getName()} does not exists in global scope.`);
     // eslint-disable-next-line max-len
-    if (!command.isGlobalCommand() && !this.guildCommands.has({ guildID: command.getGuildID(), commandName: command.getName() })) throw new Error(`Command ${command.getName()} does not exists in guild scope.`);
+    if (!command.isGlobalCommand() && !this.guildCommands.has({ guildID: command.getGuildID(), commandAliases: command.getAliases() })) throw new Error(`Command ${command.getName()} does not exists in guild scope.`);
     if (command.isSlash()) {
       const requestResult = await this.httpClient.delete(
         'v10',
@@ -154,9 +162,9 @@ export class CommandManager {
     }
 
     if (command.isGlobalCommand()) {
-      return this.globalCommands.delete(command.getName());
+      return this.globalCommands.delete(command.getAliases());
     } else {
-      return this.guildCommands.delete({ guildID: command.getGuildID(), commandName: command.getName() });
+      return this.guildCommands.delete({ guildID: command.getGuildID(), commandAliases: command.getAliases() });
     }
   }
 
@@ -174,7 +182,9 @@ export class CommandManager {
    * @returns {(CommandStructureBased | null)}
    */
   public getGuildCommand(parameters: ICommandGuildScope): CommandStructureBased | null {
-    return this.guildCommands.get(parameters) || null;
+    return this.guildCommands.find((value, key) => {
+      return (key.guildID === parameters.guildID) && (key.commandAliases.some((aliase) => { return parameters.commandAliases.includes(aliase); }));
+    }) || null;
   }
 
   /**
@@ -186,7 +196,7 @@ export class CommandManager {
   public getCommand(name: string, guildID?: string): CommandStructureBased | null {
     var command;
     if (guildID) {
-      command = this.getGuildCommand({ guildID, commandName: name });
+      command = this.getGuildCommand({ guildID, commandAliases: [name] });
     }
 
     if (!command) {

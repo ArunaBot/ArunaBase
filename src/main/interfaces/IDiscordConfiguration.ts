@@ -11,5 +11,5 @@ export interface IDiscordConfiguration extends ClientOptions {
 
 export interface ICommandGuildScope {
   guildID: string;
-  commandName: string;
+  commandAliases: string[];
 }
