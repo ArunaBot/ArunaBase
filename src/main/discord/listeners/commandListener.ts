@@ -1,4 +1,4 @@
-import { Interaction, Message, CommandInteraction, GuildMember, InteractionResponse, BooleanCache } from 'discord.js';
+import { Interaction, Message, CommandInteraction, GuildMember, InteractionResponse, BooleanCache, EmbedBuilder, ChannelType } from 'discord.js';
 import { IDiscordCommandContext } from '../../interfaces';
 import { AsyncCommandStructure, CommandStructure } from '../structures';
 import { DiscordClient } from '../Client';
@@ -43,7 +43,8 @@ export class CommandListener {
       message,
     };
     try {
-      await this.executeCommand(commandName, context);
+      var isDM = message.channel.type === ChannelType.DM;
+      await this.executeCommand(commandName, context, isDM);
     } catch (error) {
       this.client.getLogger().error('An error ocurred while execute command ' + commandName + '.\nError:', error);
     }
@@ -76,10 +77,11 @@ export class CommandListener {
     }
   }
 
-  private async executeCommand(commandName: string, context: IDiscordCommandContext): Promise<void> {
+  private async executeCommand(commandName: string, context: IDiscordCommandContext, isDM = false): Promise<void> {
     context = { ...context, ...this.additionalContext };
     const command = this.client.getCommandManager().getCommand(commandName, context.guild?.id);
     if (!command) return;
+    if (!command.isDMAllowed() && isDM) return;
     try {
       if (command.isAsyncCommand()) {
         const asyncCommand = command as AsyncCommandStructure;
