@@ -15,8 +15,8 @@ export class CommandListener {
   }
 
   private async onMessage(message: Message): Promise<void> {
-    if (message.author.bot || !message.content) return;
     const prefix = this.client.getCommandManager().getPrefix();
+    if (message.author.bot || !message.content || !prefix) return;
     if (!message.content.startsWith(prefix)) return;
     const args = message.content.slice(prefix.length).trim().split(/ +/);
     const commandName = args.shift()?.toLowerCase() ?? '';

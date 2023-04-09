@@ -17,7 +17,7 @@ export class HTTPClient extends HTTPClientBase {
     });
     const waitData = new Promise<[string | null, number]>((resolve) => {
       request.on('end', () => {
-        resolve([data, request.statusCode]);
+        resolve([data, request.statusCode ?? 200]);
       });
     });
     return await waitData;

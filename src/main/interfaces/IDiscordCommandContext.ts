@@ -22,11 +22,11 @@ export interface IDiscordCommandContext {
   editReply: (content: string | any) => Promise<void> | Promise<Message<boolean>> | Promise<Message<BooleanCache<any>>>;
   discreteReply: (content: string | any) => Promise<void> | Promise<Message<boolean>> | Promise<InteractionResponse<boolean>>;
   messageReplyContent?: any,
-  args: (string | number | boolean | User)[];
+  args: (string | number | boolean | User | undefined)[];
   author: User;
-  member?: GuildMember;
-  guild?: Guild;
   channel?: DMChannel | PartialDMChannel | NewsChannel | TextChannel | PrivateThreadChannel | PublicThreadChannel<boolean> | VoiceChannel;
+  member?: GuildMember | null;
+  guild?: Guild | null;
   interaction?: CommandInteraction;
   message?: Message;
   [key: symbol]: any;

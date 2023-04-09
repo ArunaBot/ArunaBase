@@ -6,7 +6,7 @@ import { match } from 'path-to-regexp';
 export class HTTPServer {
   private app: express.Express;
   private port: number;
-  private server: http.Server;
+  private server: http.Server | null;
   private isSubServer: boolean;
   private options: IHTTPServerConfiguration;
   private registredRoutes: IHTTPServerRoute[];

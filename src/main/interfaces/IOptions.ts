@@ -22,7 +22,7 @@ export interface ICommandParameter {
   name_localizations?: ILocalizationBase;
   description_localizations?: ILocalizationBase;
   type: ApplicationCommandOptionType;
-  required: boolean;
+  required?: boolean;
   choices?: APIApplicationCommandOptionChoice[];
   options?: ICommandParameter[];
   channel_types?: CategoryChannelType[];
