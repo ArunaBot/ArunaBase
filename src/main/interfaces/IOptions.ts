@@ -1,11 +1,11 @@
 import { ApplicationCommandOptionType, ApplicationCommandPermissions, ApplicationCommandType, APIApplicationCommandOptionChoice, CategoryChannelType } from 'discord.js';
+import { Logger } from '@promisepending/logger.js';
 import { IDiscordCommandContext } from './IDiscordCommandContext';
-import { Utils } from '@twitchapis/twitch.js';
 import { DiscordClient } from '../discord';
 
 export interface ICommandManagerOptions {
   client: DiscordClient;
-  logger: Utils.Logger;
+  logger: Logger;
   additionalContext?: { [key: symbol]: any };
   prefix?: string;
   allowLegacyCommands?: boolean;

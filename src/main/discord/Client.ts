@@ -1,7 +1,7 @@
 import { ClientOptions, Client as DJSClient } from 'discord.js';
 import { IDiscordConfiguration } from '../interfaces';
+import { Logger } from '@promisepending/logger.js';
 import { CommandManager } from './managers';
-import { Utils } from '@twitchapis/twitch.js';
 
 export class DiscordClient extends DJSClient {
   private allowSlashCommands: boolean;
@@ -9,16 +9,16 @@ export class DiscordClient extends DJSClient {
   private commandManager: CommandManager;
   private configuration: IDiscordConfiguration;
   private prefix: string;
-  private logger: Utils.Logger;
+  private logger: Logger;
 
-  constructor(options: IDiscordConfiguration) {
+  constructor(options: IDiscordConfiguration, logger?: Logger) {
     super(options as ClientOptions);
 
     this.prefix = options.prefix ?? '!';
     this.allowSlashCommands = options.allowSlashCommands ?? true;
     this.allowLegacyCommands = options.allowLegacyCommands ?? true;
 
-    this.logger = new Utils.Logger({
+    this.logger = logger ?? new Logger({
       prefix: this.prefix,
       coloredBackground: true,
       allLineColored: true,
@@ -46,7 +46,7 @@ export class DiscordClient extends DJSClient {
     return (this as DJSClient);
   }
 
-  public getLogger(): Utils.Logger {
+  public getLogger(): Logger {
     return this.logger;
   }
 
