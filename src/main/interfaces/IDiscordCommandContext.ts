@@ -10,6 +10,7 @@ import {
   PartialDMChannel,
   PrivateThreadChannel,
   PublicThreadChannel,
+  StageChannel,
   TextChannel,
   User,
   VoiceChannel,
@@ -18,15 +19,15 @@ import { DiscordClient } from '../discord';
 
 export interface IDiscordCommandContext {
   client: DiscordClient;
-  reply: (content: string | any) => Promise<void> | Promise<Message<boolean>> | Promise<InteractionResponse<boolean>>;
-  editReply: (content: string | any) => Promise<void> | Promise<Message<boolean>> | Promise<Message<BooleanCache<any>>>;
-  discreteReply: (content: string | any) => Promise<void> | Promise<Message<boolean>> | Promise<InteractionResponse<boolean>>;
+  reply: (content: string | any) => Promise<Message<boolean>> | Promise<InteractionResponse<boolean>>;
+  editReply: (content: string | any) => Promise<Message<boolean>> | Promise<Message<BooleanCache<any>>>;
+  discreteReply: (content: string | any) => Promise<Message<boolean>> | Promise<InteractionResponse<boolean>>;
   messageReplyContent?: any,
   args: (string | number | boolean | User | undefined)[];
   author: User;
-  channel?: DMChannel | PartialDMChannel | NewsChannel | TextChannel | PrivateThreadChannel | PublicThreadChannel<boolean> | VoiceChannel;
   member?: GuildMember | null;
   guild?: Guild | null;
+  channel?: DMChannel | PartialDMChannel | NewsChannel | TextChannel | PrivateThreadChannel | PublicThreadChannel<boolean> | VoiceChannel | StageChannel | null;
   interaction?: CommandInteraction;
   message?: Message;
   [key: symbol]: any;

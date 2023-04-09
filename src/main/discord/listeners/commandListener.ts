@@ -27,9 +27,9 @@ export class CommandListener {
       member: message.member,
       author: message.author,
       messageReplyContent: null,
-      reply: async (content: any): Promise<Message<boolean>> => {
+      reply: async (...content: [string | EmbedBuilder]): Promise<Message<boolean>> => {
         return new Promise((resolve, reject) => {
-          message.reply(content).then((result) => {
+          message.reply(this.replyParser(...content)).then((result) => {
             context.messageReplyContent = result;
             return resolve(result);
           }).catch((reason) => {
@@ -37,8 +37,18 @@ export class CommandListener {
           });
         });
       },
-      editReply: async (content: any): Promise<Message> => { return (context.messageReplyContent as Message<boolean>).edit(content); },
-      discreteReply: message.reply.bind(message),
+      editReply: async (...content: [string | EmbedBuilder]): Promise<Message> => {
+        return (context.messageReplyContent as Message<boolean>).edit(this.replyParser(...content));
+      },
+      discreteReply: async (...content: [string | EmbedBuilder]): Promise<Message<boolean>> => {
+        return new Promise((resolve, reject) => {
+          context.reply(...content).then((result) => {
+            return resolve(result as Message<boolean>);
+          }).catch((reason) => {
+            return reject(reason);
+          });
+        });
+      },
       args,
       message,
     };
@@ -61,9 +71,15 @@ export class CommandListener {
       member: ctx.member as GuildMember,
       author: ctx.user,
       args: ctx.options.data.map((arg) => arg.value),
-      reply: async (content: any): Promise<InteractionResponse<boolean>> => { return await ctx.reply({ content }); },
-      editReply: async (content: any): Promise<Message<BooleanCache<any>>> => { return await ctx.editReply({ content }); },
-      discreteReply: async (content: any): Promise<InteractionResponse<boolean>> => { return await ctx.reply({ content, ephemeral: true }); },
+      reply: async (...content: [string | EmbedBuilder]): Promise<InteractionResponse<boolean>> => {
+        return await ctx.reply(this.replyParser(...content));
+      },
+      editReply: async (...content: [string | EmbedBuilder]): Promise<Message<BooleanCache<any>>> => {
+        return await ctx.editReply(this.replyParser(...content));
+      },
+      discreteReply: async (...content: [string | EmbedBuilder]): Promise<InteractionResponse<boolean>> => {
+        return await ctx.reply({ ...this.replyParser(...content), ephemeral: true });
+      },
       interaction: ctx,
     };
     try {
@@ -75,6 +91,23 @@ export class CommandListener {
       }
       this.client.getLogger().error(errorMessage + '\nError:', error);
     }
+  }
+
+  private replyParser(...params: [string | EmbedBuilder]): { content?: string, embeds?: EmbedBuilder[] } {
+    const result: { content?: string, embeds?: EmbedBuilder[] } = {
+      content: '',
+      embeds: [],
+    };
+
+    params.forEach((item) => {
+      if (typeof item === 'string') {
+        result.content = item;
+      } else {
+        result.embeds!.push(item);
+      }
+    });
+
+    return result;
   }
 
   private async executeCommand(commandName: string, context: IDiscordCommandContext, isDM = false): Promise<void> {
