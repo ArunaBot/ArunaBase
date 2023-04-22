@@ -86,8 +86,10 @@ export class CommandListener {
       await this.executeCommand(commandName, context);
     } catch (error) {
       const errorMessage = 'An error ocurred while execute command ' + commandName + '.';
-      if (!ctx.replied) {
+      if (!ctx.replied && !ctx.deferred) {
         ctx.reply({ content: errorMessage, ephemeral: true });
+      } else if (ctx.deferred) {
+        ctx.editReply({ content: errorMessage });
       }
       this.client.getLogger().error(errorMessage + '\nError:', error);
     }
