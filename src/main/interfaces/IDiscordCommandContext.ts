@@ -23,6 +23,7 @@ export interface IDiscordCommandContext {
   reply: (...content: [string | EmbedBuilder]) => Promise<Message<boolean>> | Promise<InteractionResponse<boolean>>;
   editReply: (...content: [string | EmbedBuilder]) => Promise<Message<boolean>> | Promise<Message<BooleanCache<any>>>;
   discreteReply: (...content: [string | EmbedBuilder]) => Promise<Message<boolean>> | Promise<InteractionResponse<boolean>>;
+  deleteReply: () => Promise<void | Message<boolean>>;
   messageReplyContent?: any,
   args: (string | number | boolean | User | undefined)[];
   author: User;

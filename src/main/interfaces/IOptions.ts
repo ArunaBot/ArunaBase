@@ -1,6 +1,6 @@
 import { ApplicationCommandOptionType, ApplicationCommandPermissions, ApplicationCommandType, APIApplicationCommandOptionChoice, CategoryChannelType } from 'discord.js';
-import { Logger } from '@promisepending/logger.js';
 import { IDiscordCommandContext } from './IDiscordCommandContext';
+import { Logger } from '@promisepending/logger.js';
 import { DiscordClient } from '../discord';
 
 export interface ICommandManagerOptions {
