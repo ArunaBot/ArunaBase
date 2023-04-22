@@ -31,6 +31,7 @@ export class DiscordClient extends DJSClient {
       prefix: this.prefix,
       allowLegacyCommands: this.allowLegacyCommands,
       allowSlashCommands: this.allowSlashCommands,
+      additionalContext: options.additionalCommandContext,
     });
   }
 

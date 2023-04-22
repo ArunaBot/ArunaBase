@@ -7,6 +7,7 @@ export interface IDiscordConfiguration extends ClientOptions {
   shardId?: number,
   allowSlashCommands?: boolean,
   allowLegacyCommands?: boolean,
+  additionalCommandContext?: { [key: symbol]: any },
 }
 
 export interface ICommandGuildScope {
