@@ -1,6 +1,6 @@
-import { Interaction, Message, CommandInteraction, GuildMember, InteractionResponse, BooleanCache, EmbedBuilder, ChannelType } from 'discord.js';
-import { IDiscordCommandContext } from '../../interfaces';
+import { Interaction, Message, CommandInteraction, GuildMember, InteractionResponse, BooleanCache, EmbedBuilder, ChannelType, DiscordAPIError } from 'discord.js';
 import { AsyncCommandStructure, CommandStructure } from '../structures';
+import { IDiscordCommandContext } from '../../interfaces';
 import { DiscordClient } from '../Client';
 
 export class CommandListener {
@@ -16,44 +16,63 @@ export class CommandListener {
 
   private async onMessage(message: Message): Promise<void> {
     const prefix = this.client.getCommandManager().getPrefix();
+
     if (message.author.bot || !message.content || !prefix) return;
     if (!message.content.startsWith(prefix)) return;
+
     const args = message.content.slice(prefix.length).trim().split(/ +/);
     const commandName = args.shift()?.toLowerCase() ?? '';
-    const context: IDiscordCommandContext = {
-      client: this.client,
-      guild: message.guild,
-      channel: message.channel,
-      member: message.member,
-      author: message.author,
-      messageReplyContent: null,
-      reply: async (...content: [string | EmbedBuilder]): Promise<Message<boolean>> => {
-        return new Promise((resolve, reject) => {
-          message.reply(this.replyParser(...content)).then((result) => {
-            context.messageReplyContent = result;
-            return resolve(result);
-          }).catch((reason) => {
-            return reject(reason);
-          });
-        });
-      },
-      editReply: async (...content: [string | EmbedBuilder]): Promise<Message> => {
-        return (context.messageReplyContent as Message<boolean>).edit(this.replyParser(...content));
-      },
-      discreteReply: async (...content: [string | EmbedBuilder]): Promise<Message<boolean>> => {
-        return new Promise((resolve, reject) => {
-          context.reply(...content).then((result) => {
-            return resolve(result as Message<boolean>);
-          }).catch((reason) => {
-            return reject(reason);
-          });
-        });
-      },
-      args,
-      message,
-    };
+
     try {
-      var isDM = message.channel.type === ChannelType.DM;
+      const context: IDiscordCommandContext = {
+        client: this.client,
+        guild: message.guild,
+        channel: message.channel,
+        member: message.member,
+        author: message.author,
+        messageReplyContent: null,
+        reply: async (...content: [string | EmbedBuilder]): Promise<Message<boolean>> => {
+          return new Promise(async (resolve, reject) => {
+            message.reply(this.replyParser(...content)).then((result) => {
+              context.messageReplyContent = result;
+              return resolve(result);
+            }).catch((error: DiscordAPIError) => {
+              if (error.code === 10008 || error.code === 50035) {
+                message.channel.send(this.replyParser(...content)).then((result) => {
+                  context.messageReplyContent = result;
+                  return resolve(result);
+                }).catch((reason) => {
+                  return reject(reason);
+                });
+              } else {
+                return reject(error);
+              }
+            });
+          });
+        },
+        editReply: async (...content: [string | EmbedBuilder]): Promise<Message> => {
+          if (context.messageReplyContent && (context.messageReplyContent as Message<boolean>).editable) {
+            return (context.messageReplyContent as Message<boolean>).edit(this.replyParser(...content));
+          }
+          return (context.reply(...content) as Promise<Message<boolean>>);
+        },
+        discreteReply: async (...content: [string | EmbedBuilder]): Promise<Message<boolean>> => {
+          return new Promise((resolve, reject) => {
+            context.reply(...content).then((result) => {
+              return resolve(result as Message<boolean>);
+            }).catch((reason) => {
+              return reject(reason);
+            });
+          });
+        },
+        deleteReply: async (): Promise<void | Message<boolean>> => {
+          if (!context.messageReplyContent || !(context.messageReplyContent as Message<boolean>)?.deletable) return Promise.resolve();
+          return (context.messageReplyContent as Message<boolean>).delete();
+        },
+        args,
+        message,
+      };
+      const isDM = message.channel.type === ChannelType.DM;
       await this.executeCommand(commandName, context, isDM);
     } catch (error) {
       this.client.getLogger().error('An error ocurred while execute command ' + commandName + '.\nError:', error);
@@ -62,27 +81,33 @@ export class CommandListener {
 
   private async onInteractionCreate(interaction: Interaction): Promise<void> {
     if (!interaction.isCommand()) return;
+
     const ctx = interaction as CommandInteraction;
     const commandName = ctx.commandName;
-    const context: IDiscordCommandContext = {
-      client: this.client,
-      guild: ctx.guild,
-      channel: ctx.channel,
-      member: ctx.member as GuildMember,
-      author: ctx.user,
-      args: ctx.options.data.map((arg) => arg.value),
-      reply: async (...content: [string | EmbedBuilder]): Promise<InteractionResponse<boolean>> => {
-        return await ctx.reply(this.replyParser(...content));
-      },
-      editReply: async (...content: [string | EmbedBuilder]): Promise<Message<BooleanCache<any>>> => {
-        return await ctx.editReply(this.replyParser(...content));
-      },
-      discreteReply: async (...content: [string | EmbedBuilder]): Promise<InteractionResponse<boolean>> => {
-        return await ctx.reply({ ...this.replyParser(...content), ephemeral: true });
-      },
-      interaction: ctx,
-    };
+
     try {
+      const context: IDiscordCommandContext = {
+        client: this.client,
+        guild: ctx.guild,
+        channel: ctx.channel,
+        member: ctx.member as GuildMember,
+        author: ctx.user,
+        args: ctx.options.data.map((arg) => arg.value),
+        reply: async (...content: [string | EmbedBuilder]): Promise<InteractionResponse<boolean>> => {
+          return await ctx.reply(this.replyParser(...content));
+        },
+        editReply: async (...content: [string | EmbedBuilder]): Promise<Message<BooleanCache<any>>> => {
+          return await ctx.editReply(this.replyParser(...content));
+        },
+        discreteReply: async (...content: [string | EmbedBuilder]): Promise<InteractionResponse<boolean>> => {
+          return await ctx.reply({ ...this.replyParser(...content), ephemeral: true });
+        },
+        deleteReply: async (): Promise<void> => {
+          return ctx.deleteReply();
+        },
+        interaction: ctx,
+      };
+
       await this.executeCommand(commandName, context);
     } catch (error) {
       const errorMessage = 'An error ocurred while execute command ' + commandName + '.';
