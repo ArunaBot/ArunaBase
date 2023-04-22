@@ -245,6 +245,10 @@ class CommandStructureBase {
   public isNSFW(): boolean {
     return this.nsfw;
   }
+
+  public checkPermission(context: IDiscordCommandContext): boolean {
+    return true;
+  }
 }
 
 export class CommandStructure extends CommandStructureBase {

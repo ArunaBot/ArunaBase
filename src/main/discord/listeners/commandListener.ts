@@ -116,6 +116,7 @@ export class CommandListener {
     if (!command) return;
     if (!command.isDMAllowed() && isDM) return;
     try {
+      if (!command.checkPermission(context)) return Promise.resolve();
       if (command.isAsyncCommand()) {
         const asyncCommand = command as AsyncCommandStructure;
         await asyncCommand.run(context);
