@@ -57,11 +57,27 @@ export class CommandListener {
           return (context.reply(...content) as Promise<Message<boolean>>);
         },
         discreteReply: async (...content: [string | EmbedBuilder]): Promise<Message<boolean>> => {
-          return new Promise((resolve, reject) => {
-            context.reply(...content).then((result) => {
-              return resolve(result as Message<boolean>);
-            }).catch((reason) => {
-              return reject(reason);
+          return new Promise(async (resolve, reject) => {
+            const parsedContent = this.replyParser(...content);
+            message.reply({
+              ...parsedContent,
+              allowedMentions: {
+                repliedUser: false,
+              },
+            }).then((result) => {
+              context.messageReplyContent = result;
+              return resolve(result);
+            }).catch((error: DiscordAPIError) => {
+              if (error.code === 10008 || error.code === 50035) {
+                message.channel.send(this.replyParser(...content)).then((result) => {
+                  context.messageReplyContent = result;
+                  return resolve(result);
+                }).catch((reason) => {
+                  return reject(reason);
+                });
+              } else {
+                return reject(error);
+              }
             });
           });
         },
