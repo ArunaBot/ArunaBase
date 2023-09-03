@@ -3,5 +3,7 @@ export * from './IHTTPServerConfiguration';
 export * from './IDiscordCommandContext';
 export * from './IDiscordConfiguration';
 export * from './ITwitchConfiguration';
+export * from './IEndpointStructure';
 export * from './IHTTPServerRoute';
 export * from './IOptions';
+export * from './EHTTP';
