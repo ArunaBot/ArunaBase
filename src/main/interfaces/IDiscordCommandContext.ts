@@ -1,4 +1,5 @@
 import {
+  AttachmentBuilder,
   BooleanCache,
   CommandInteraction,
   DMChannel,
@@ -20,9 +21,9 @@ import { DiscordClient } from '../discord';
 
 export interface IDiscordCommandContext {
   client: DiscordClient;
-  reply: (...content: [string | EmbedBuilder]) => Promise<Message<boolean>> | Promise<InteractionResponse<boolean>>;
-  editReply: (...content: [string | EmbedBuilder]) => Promise<Message<boolean>> | Promise<Message<BooleanCache<any>>>;
-  discreteReply: (...content: [string | EmbedBuilder]) => Promise<Message<boolean>> | Promise<InteractionResponse<boolean>>;
+  reply: (...content: (string | EmbedBuilder | AttachmentBuilder)[]) => Promise<Message<boolean>> | Promise<InteractionResponse<boolean>>;
+  editReply: (...content: (string | EmbedBuilder | AttachmentBuilder)[]) => Promise<Message<boolean>> | Promise<Message<BooleanCache<any>>>;
+  discreteReply: (...content: (string | EmbedBuilder | AttachmentBuilder)[]) => Promise<Message<boolean>> | Promise<InteractionResponse<boolean>>;
   deleteReply: () => Promise<void | Message<boolean>>;
   messageReplyContent?: any,
   args: (string | number | boolean | User | undefined)[];

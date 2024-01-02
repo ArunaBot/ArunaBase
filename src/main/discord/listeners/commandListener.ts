@@ -1,4 +1,4 @@
-import { Interaction, Message, CommandInteraction, GuildMember, InteractionResponse, BooleanCache, EmbedBuilder, ChannelType, DiscordAPIError } from 'discord.js';
+import { Interaction, Message, CommandInteraction, GuildMember, InteractionResponse, BooleanCache, EmbedBuilder, ChannelType, DiscordAPIError, AttachmentBuilder } from 'discord.js';
 import { AsyncCommandStructure, CommandStructure } from '../structures';
 import { IDiscordCommandContext } from '../../interfaces';
 import { DiscordClient } from '../Client';
@@ -31,7 +31,7 @@ export class CommandListener {
         member: message.member,
         author: message.author,
         messageReplyContent: null,
-        reply: async (...content: [string | EmbedBuilder]): Promise<Message<boolean>> => {
+        reply: async (...content: (string | EmbedBuilder | AttachmentBuilder)[]): Promise<Message<boolean>> => {
           return new Promise(async (resolve, reject) => {
             message.reply(this.replyParser(...content)).then((result) => {
               context.messageReplyContent = result;
@@ -50,13 +50,13 @@ export class CommandListener {
             });
           });
         },
-        editReply: async (...content: [string | EmbedBuilder]): Promise<Message> => {
+        editReply: async (...content: (string | EmbedBuilder | AttachmentBuilder)[]): Promise<Message> => {
           if (context.messageReplyContent && (context.messageReplyContent as Message<boolean>).editable) {
             return (context.messageReplyContent as Message<boolean>).edit(this.replyParser(...content));
           }
           return (context.reply(...content) as Promise<Message<boolean>>);
         },
-        discreteReply: async (...content: [string | EmbedBuilder]): Promise<Message<boolean>> => {
+        discreteReply: async (...content: (string | EmbedBuilder | AttachmentBuilder)[]): Promise<Message<boolean>> => {
           return new Promise(async (resolve, reject) => {
             const parsedContent = this.replyParser(...content);
             message.reply({
@@ -68,6 +68,8 @@ export class CommandListener {
               context.messageReplyContent = result;
               return resolve(result);
             }).catch((error: DiscordAPIError) => {
+              // 10008: Unknown Message
+              // 50035: Cannot send messages to this user
               if (error.code === 10008 || error.code === 50035) {
                 message.channel.send(this.replyParser(...content)).then((result) => {
                   context.messageReplyContent = result;
@@ -109,13 +111,13 @@ export class CommandListener {
         member: ctx.member as GuildMember,
         author: ctx.user,
         args: ctx.options.data.map((arg) => arg.value),
-        reply: async (...content: [string | EmbedBuilder]): Promise<InteractionResponse<boolean>> => {
+        reply: async (...content: (string | EmbedBuilder | AttachmentBuilder)[]): Promise<InteractionResponse<boolean>> => {
           return await ctx.reply(this.replyParser(...content));
         },
-        editReply: async (...content: [string | EmbedBuilder]): Promise<Message<BooleanCache<any>>> => {
+        editReply: async (...content: (string | EmbedBuilder | AttachmentBuilder)[]): Promise<Message<BooleanCache<any>>> => {
           return await ctx.editReply(this.replyParser(...content));
         },
-        discreteReply: async (...content: [string | EmbedBuilder]): Promise<InteractionResponse<boolean>> => {
+        discreteReply: async (...content: (string | EmbedBuilder | AttachmentBuilder)[]): Promise<InteractionResponse<boolean>> => {
           return await ctx.reply({ ...this.replyParser(...content), ephemeral: true });
         },
         deleteReply: async (): Promise<void> => {
@@ -136,17 +138,22 @@ export class CommandListener {
     }
   }
 
-  private replyParser(...params: [string | EmbedBuilder]): { content?: string, embeds?: EmbedBuilder[] } {
-    const result: { content?: string, embeds?: EmbedBuilder[] } = {
+  private replyParser(...params: (string | EmbedBuilder | AttachmentBuilder)[]): { content?: string, embeds?: EmbedBuilder[], files?: AttachmentBuilder[] } {
+    const result: { content?: string, embeds?: EmbedBuilder[], files?: AttachmentBuilder[] } = {
       content: '',
       embeds: [],
+      files: [],
     };
 
     params.forEach((item) => {
       if (typeof item === 'string') {
-        result.content = item;
-      } else {
+        result.content += item;
+      } else if (item instanceof EmbedBuilder) {
         result.embeds!.push(item);
+      } else if (item instanceof AttachmentBuilder) {
+        result.files!.push(item);
+      } else {
+        throw new Error('Invalid parameter type!');
       }
     });
 
