@@ -20,4 +20,4 @@ export class ArunaCoreClient extends ArunaClient {
   }
 }
 
-export * as ArunaCore from 'arunacore-api';
+export * from 'arunacore-api';

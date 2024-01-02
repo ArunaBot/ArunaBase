@@ -19,4 +19,4 @@ export class TwitchClient extends Client {
   }
 }
 
-export * as TJS from '@twitchapis/twitch.js';
+export * from '@twitchapis/twitch.js';

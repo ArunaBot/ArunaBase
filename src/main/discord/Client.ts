@@ -63,4 +63,4 @@ export class DiscordClient extends DJSClient {
 }
 
 export { IntentsBitField as Intents } from 'discord.js';
-export * as DJS from 'discord.js';
+export * from 'discord.js';
