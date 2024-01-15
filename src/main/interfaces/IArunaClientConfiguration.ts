@@ -1,4 +1,4 @@
-import { Logger } from 'arunacore-api';
+import { Logger } from '@promisepending/logger.js';
 
 export interface IArunaClientConfiguration {
     host: string;

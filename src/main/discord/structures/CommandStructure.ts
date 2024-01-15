@@ -6,10 +6,10 @@ import { ApplicationCommandOptionType, ApplicationCommandType } from 'discord.js
 class CommandStructureBase {
   private name: string;
   private description: string;
-  private localizations: { [key: string]: ILocalizationBase };
-  private guildID: string;
+  private localizations: { [key: string]: ILocalizationBase } | null;
+  private guildID: string | null;
 
-  protected isAsync: boolean;
+  protected isAsync?: boolean;
   protected isSlashCommand: boolean;
   protected isLegacyCommand: boolean;
   protected isLocalized: boolean;
@@ -19,11 +19,11 @@ class CommandStructureBase {
   protected parameters: ICommandParameter[];
   protected type: number;
   protected nsfw: boolean;
-  protected slashId: string;
+  protected slashId?: string;
 
   constructor(name: string, options: ICommandOptions) {
     this.name = name;
-    this.description = options.description;
+    this.description = options.description ?? '';
     this.isSlashCommand = options.isSlashCommand ?? true;
     this.isLegacyCommand = options.isLegacyCommand ?? true;
     this.allowDM = options.allowDM ?? true;
@@ -31,12 +31,22 @@ class CommandStructureBase {
     this.type = options.type ?? ApplicationCommandType.ChatInput; // Slash Commands only
     this.nsfw = options.nsfw ?? false;
 
+    this.aliases.unshift(this.name);
+
     if (options.name_localizations || options.description_localizations) {
       this.isLocalized = true;
       this.localizations = {
-        'name_localizations': options.name_localizations,
-        'description_localizations': options.description_localizations,
+        'name_localizations': options.name_localizations ?? {},
+        'description_localizations': options.description_localizations ?? {},
       };
+      if (options.name_localizations) {
+        Object.values(options.name_localizations).forEach((aliase) => {
+          if (aliase !== this.name) this.aliases.push(aliase);
+        });
+      }
+    } else {
+      this.isLocalized = false;
+      this.localizations = null;
     }
 
     if (this.type === ApplicationCommandType.ChatInput && options.parameters) {
@@ -50,6 +60,7 @@ class CommandStructureBase {
       this.guildID = options.guildID;
     } else {
       this.isGlobal = true;
+      this.guildID = null;
     }
 
     var subCommandVerifier = 0;
@@ -74,7 +85,7 @@ class CommandStructureBase {
     if ((insideCommandGround || insideSubCommand) && parameter.type === ApplicationCommandOptionType.SubcommandGroup) throw new Error('Cannot have nested subcommand/group');
     if (((parameter.type === ApplicationCommandOptionType.Subcommand) ||
       (parameter.type === ApplicationCommandOptionType.SubcommandGroup)) &&
-      parameter.options.length > 25) throw new Error('Too many parameters (max 25)');
+      parameter.options!.length > 25) throw new Error('Too many parameters (max 25)');
     // fix subcommands possible errors
     if (insideCommandGround && parameter.type !== ApplicationCommandOptionType.Subcommand) {
       // the user forgot to put his parameters inside a subcommand
@@ -89,13 +100,13 @@ class CommandStructureBase {
     // Check an fix nameLocalizations
     if (parameter.name_localizations) {
       Object.keys(parameter.name_localizations).forEach((key) => {
-        if (parameter.name_localizations[key].length > 32) {
-          throw new Error(`Localized Parameter name: ${parameter.name_localizations[key]}, for parameter: ${parameter.name}, is too long (max 32)`);
+        if (parameter.name_localizations![key].length > 32) {
+          throw new Error(`Localized Parameter name: ${parameter.name_localizations![key]}, for parameter: ${parameter.name}, is too long (max 32)`);
         }
-        if (parameter.name_localizations[key].length < 1) {
-          throw new Error(`Localized Parameter name: ${parameter.name_localizations[key]}, for parameter: ${parameter.name}, is too short (min 1)`);
+        if (parameter.name_localizations![key].length < 1) {
+          throw new Error(`Localized Parameter name: ${parameter.name_localizations![key]}, for parameter: ${parameter.name}, is too short (min 1)`);
         }
-        parameter.name_localizations[key] = parameter.name_localizations[key].toLowerCase();
+        parameter.name_localizations![key] = parameter.name_localizations![key].toLowerCase();
       });
     }
 
@@ -107,11 +118,11 @@ class CommandStructureBase {
     // Check and fix descriptionLocalizations
     if (parameter.description_localizations) {
       Object.keys(parameter.description_localizations).forEach((key) => {
-        if (parameter.description_localizations[key].length > 100) {
-          throw new Error(`Localized Parameter description: ${parameter.description_localizations[key]}, for parameter: ${parameter.name}, is too long (max 100)`);
+        if (parameter.description_localizations![key].length > 100) {
+          throw new Error(`Localized Parameter description: ${parameter.description_localizations![key]}, for parameter: ${parameter.name}, is too long (max 100)`);
         }
-        if (parameter.description_localizations[key].length < 1) {
-          throw new Error(`Localized Parameter description: ${parameter.description_localizations[key]}, for parameter: ${parameter.name}, is too short (min 1)`);
+        if (parameter.description_localizations![key].length < 1) {
+          throw new Error(`Localized Parameter description: ${parameter.description_localizations![key]}, for parameter: ${parameter.name}, is too short (min 1)`);
         }
       });
     }
@@ -146,7 +157,7 @@ class CommandStructureBase {
       var subCommandVerifier = 0;
       var setSubCommandVerifier = (state: number): void => { subCommandVerifier = state; };
       var getSubCommandVerifier = (): number => { return subCommandVerifier; };
-      parameter.options.forEach((option, index, array) => {
+      parameter.options!.forEach((option, index, array) => {
         array[index] = this.checkAndFixInvalidParameters(
           option,
           setSubCommandVerifier,
@@ -181,8 +192,7 @@ class CommandStructureBase {
   }
 
   public getLocalizations(): { [key: string]: ILocalizationBase } {
-    if (!this.isLocalized) return {} as { [key: string]: ILocalizationBase };
-    return this.localizations;
+    return this.localizations ?? {};
   }
 
   public getGuildID(): string {
@@ -199,7 +209,7 @@ class CommandStructureBase {
   }
 
   public getSlashId(): string {
-    return this.slashId;
+    return this.slashId ?? '';
   }
 
   public setSlashId(id: string): void {
@@ -209,7 +219,7 @@ class CommandStructureBase {
   }
 
   public isAsyncCommand(): boolean {
-    return this.isAsync;
+    return this.isAsync ?? false;
   }
 
   public isSlash(): boolean {
@@ -235,13 +245,17 @@ class CommandStructureBase {
   public isNSFW(): boolean {
     return this.nsfw;
   }
+
+  public checkPermission(context: IDiscordCommandContext): boolean {
+    return true;
+  }
 }
 
 export class CommandStructure extends CommandStructureBase {
   constructor(name: string, options: ICommandOptions) {
     super(name, options);
 
-    if (options.command !== null) this.execute = options.command;
+    if (options.command) this.execute = options.command;
 
     this.isAsync = false;
   }
@@ -259,7 +273,7 @@ export class AsyncCommandStructure extends CommandStructure {
   constructor(name: string, options: IAsyncCommandOptions) {
     super(name, options);
 
-    if (options.command !== null) this.execute = options.command;
+    if (options.command) this.execute = options.command;
 
     this.isAsync = true;
   }

@@ -7,6 +7,7 @@
     "@typescript-eslint/no-unused-expressions": ["error"],
     "@typescript-eslint/no-var-requires": ["off"],
     "@typescript-eslint/no-use-before-define": ["error"],
+    "@typescript-eslint/no-non-null-assertion": ["off"],
     "array-bracket-spacing": ["warn", "never"],
     "capIsNew": ["off"],
     "comma-dangle": ["error", "always-multiline"],
@@ -25,7 +26,7 @@
     "max-len": [
       "warn",
       {
-        "code": 180,
+        "code": 250,
         "ignoreComments": true,
         "ignoreUrls": true
       }
@@ -91,5 +92,5 @@
     "ecmaVersion": 2020,
     "sourceType": "module"
   },
-  "plugins": ["prettier", "@typescript-eslint"]
+  "plugins": ["@typescript-eslint"]
 }

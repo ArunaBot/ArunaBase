@@ -1,11 +1,11 @@
 import { ApplicationCommandOptionType, ApplicationCommandPermissions, ApplicationCommandType, APIApplicationCommandOptionChoice, CategoryChannelType } from 'discord.js';
 import { IDiscordCommandContext } from './IDiscordCommandContext';
-import { Utils } from '@twitchapis/twitch.js';
+import { Logger } from '@promisepending/logger.js';
 import { DiscordClient } from '../discord';
 
 export interface ICommandManagerOptions {
   client: DiscordClient;
-  logger: Utils.Logger;
+  logger: Logger;
   additionalContext?: { [key: symbol]: any };
   prefix?: string;
   allowLegacyCommands?: boolean;
@@ -22,7 +22,7 @@ export interface ICommandParameter {
   name_localizations?: ILocalizationBase;
   description_localizations?: ILocalizationBase;
   type: ApplicationCommandOptionType;
-  required: boolean;
+  required?: boolean;
   choices?: APIApplicationCommandOptionChoice[];
   options?: ICommandParameter[];
   channel_types?: CategoryChannelType[];
@@ -51,4 +51,15 @@ export interface ICommandOptions {
 
 export interface IAsyncCommandOptions extends ICommandOptions {
   command?: (context: IDiscordCommandContext) => Promise<void>;
+}
+
+export interface StructuredCommand {
+  name: string;
+  type: ApplicationCommandType;
+  description: string;
+  dm_permission: boolean;
+  name_localizations?: Record<string, string>;
+  description_localizations?: Record<string, string>;
+  options?: ICommandParameter[];
+  guild_id?: string;
 }
