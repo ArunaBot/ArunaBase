@@ -1,7 +1,7 @@
 import { IHTTPServerConfiguration, IHTTPServerRoute } from '../interfaces';
+import { match } from 'path-to-regexp';
 import express from 'express';
 import http from 'http';
-import { match } from 'path-to-regexp';
 
 export class HTTPServer {
   private app: express.Express;

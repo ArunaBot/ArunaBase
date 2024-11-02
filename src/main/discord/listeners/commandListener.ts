@@ -1,4 +1,4 @@
-import { Interaction, Message, CommandInteraction, GuildMember, InteractionResponse, BooleanCache, EmbedBuilder, ChannelType, DiscordAPIError, AttachmentBuilder } from 'discord.js';
+import { Interaction, Message, CommandInteraction, GuildMember, InteractionResponse, BooleanCache, EmbedBuilder, ChannelType, DiscordAPIError, AttachmentBuilder, TextChannel } from 'discord.js';
 import { AsyncCommandStructure, CommandStructure } from '../structures';
 import { IDiscordCommandContext } from '../../interfaces';
 import { DiscordClient } from '../Client';
@@ -38,7 +38,7 @@ export class CommandListener {
               return resolve(result);
             }).catch((error: DiscordAPIError) => {
               if (error.code === 10008 || error.code === 50035) {
-                message.channel.send(this.replyParser(...content)).then((result) => {
+                (message.channel as TextChannel).send(this.replyParser(...content)).then((result) => {
                   context.messageReplyContent = result;
                   return resolve(result);
                 }).catch((reason) => {
@@ -71,7 +71,7 @@ export class CommandListener {
               // 10008: Unknown Message
               // 50035: Cannot send messages to this user
               if (error.code === 10008 || error.code === 50035) {
-                message.channel.send(this.replyParser(...content)).then((result) => {
+                (message.channel as TextChannel).send(this.replyParser(...content)).then((result) => {
                   context.messageReplyContent = result;
                   return resolve(result);
                 }).catch((reason) => {
