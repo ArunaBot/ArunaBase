@@ -2,20 +2,14 @@ import {
   AttachmentBuilder,
   BooleanCache,
   CommandInteraction,
-  DMChannel,
   EmbedBuilder,
   Guild,
   GuildMember,
+  GuildTextBasedChannel,
   InteractionResponse,
   Message,
-  NewsChannel,
-  PartialDMChannel,
-  PrivateThreadChannel,
-  PublicThreadChannel,
-  StageChannel,
-  TextChannel,
+  TextBasedChannel,
   User,
-  VoiceChannel,
 } from 'discord.js';
 import { DiscordClient } from '../discord';
 
@@ -30,7 +24,7 @@ export interface IDiscordCommandContext {
   author: User;
   member?: GuildMember | null;
   guild?: Guild | null;
-  channel?: DMChannel | PartialDMChannel | NewsChannel | TextChannel | PrivateThreadChannel | PublicThreadChannel<boolean> | VoiceChannel | StageChannel | null;
+  channel?: GuildTextBasedChannel | TextBasedChannel | null;
   interaction?: CommandInteraction;
   message?: Message;
   [key: symbol]: any;

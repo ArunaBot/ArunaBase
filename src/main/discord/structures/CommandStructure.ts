@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable quote-props */
-import { IAsyncCommandOptions, ICommandOptions, ICommandParameter, ILocalizationBase, IDiscordCommandContext } from '../../interfaces';
+ import { IAsyncCommandOptions, ICommandOptions, ICommandParameter, ILocalizationBase, IDiscordCommandContext } from '../../interfaces';
 import { ApplicationCommandOptionType, ApplicationCommandType } from 'discord.js';
 
 class CommandStructureBase {
@@ -22,7 +21,7 @@ class CommandStructureBase {
   protected slashId?: string;
 
   constructor(name: string, options: ICommandOptions) {
-    this.name = name;
+    this.name = this.checkAndFixName(name);
     this.description = options.description ?? '';
     this.isSlashCommand = options.isSlashCommand ?? true;
     this.isLegacyCommand = options.isLegacyCommand ?? true;
@@ -72,6 +71,18 @@ class CommandStructureBase {
     });
   }
 
+  private checkAndFixName(name: string): string {
+    if (name.length > 32) throw new Error(`Command name: ${name} is too long (max 32, current: ${name.length})`);
+    if (name.length < 1) throw new Error(`Command name: ${name} is too short (min 1, current: ${name.length})`);
+    if (name !== name.toLowerCase()) {
+      console.warn(`WARNING: Command name: ${name} is not lowercase, converting to lowercase`);
+    }
+    if (name.includes(' ')) {
+      console.warn(`WARNING: Command name: ${name} has spaces, replacing spaces with _`);
+    }
+    return name.toLowerCase().replace(/ /g, '_');
+  }
+
   private checkAndFixInvalidParameters(
     parameter: ICommandParameter,
     setSubCommandVerifier: (state: number) => void,
@@ -81,7 +92,7 @@ class CommandStructureBase {
   ): ICommandParameter {
     // check if there is a type
     if (!parameter) throw new Error('Unexpected Error: Parameter is required, if you are using a subcommand, please make sure that options is an array and not an object');
-    if (!parameter.type) throw new Error('Parameter type is required for all parameters, on parameter: ' + parameter.name ?? 'unknown');
+    if (!parameter.type) throw new Error('Parameter type is required for all parameters, on parameter: ' + (parameter.name ?? 'unknown'));
     if ((insideCommandGround || insideSubCommand) && parameter.type === ApplicationCommandOptionType.SubcommandGroup) throw new Error('Cannot have nested subcommand/group');
     if (((parameter.type === ApplicationCommandOptionType.Subcommand) ||
       (parameter.type === ApplicationCommandOptionType.SubcommandGroup)) &&

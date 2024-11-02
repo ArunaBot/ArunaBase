@@ -1,5 +1,4 @@
-/* eslint-disable dot-notation */
-import { EHTTP, IAsyncCommandOptions, ICommandGuildScope, ICommandManagerOptions, ICommandOptions, IEndPointStructure, StructuredCommand } from '../../interfaces';
+ import { EHTTP, IAsyncCommandOptions, ICommandGuildScope, ICommandManagerOptions, ICommandOptions, IEndPointStructure, StructuredCommand } from '../../interfaces';
 import { CommandStructureBased, CommandStructure, AsyncCommandStructure } from '../structures';
 import { ApplicationCommandType, Collection } from 'discord.js';
 import { CommandListener } from '../listeners';
@@ -265,7 +264,7 @@ export class CommandManager {
         if (requestResult.length < 2) throw new Error('CommandManager: Request result is not valid. Are you okay?');
         const commandRegisterSuccessfully = ((requestResult[1] === 201) || (requestResult[1] === 200));
 
-        if (!commandRegisterSuccessfully) throw new Error(`Commands ${commands.map((i) => i.getName()).join(', ')} could not be registered.\nResponse: ${requestResult[0]}`);
+        if (!commandRegisterSuccessfully) throw new Error(`Commands ${commands.map((i) => i.getName()).join(', ')} could not be registered.\nResponse: ${JSON.stringify(requestResult[0])}`);
 
         for (const command of slashCommands) {
           command.setSlashId(requestResult[0].id);
@@ -302,6 +301,7 @@ export class CommandManager {
     throw new Error('Not implemented 🦊');
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   public async bulkRegisterGuildCommand(commands: CommandStructureBased[]): Promise<CommandStructureBased[]> {
     throw new Error('Not implemented');
   }
@@ -330,6 +330,7 @@ export class CommandManager {
     }
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   public async unregisterGuildCommand(command: CommandStructureBased): Promise<boolean> {
     throw new Error('Not implemented');
   }
