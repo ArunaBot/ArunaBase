@@ -1,5 +1,4 @@
-/* eslint-disable dot-notation */
-import { EHTTP, IAsyncCommandOptions, ICommandGuildScope, ICommandManagerOptions, ICommandOptions, IEndPointStructure, StructuredCommand } from '../../interfaces';
+ import { EHTTP, IAsyncCommandOptions, ICommandGuildScope, ICommandManagerOptions, ICommandOptions, IEndPointStructure, StructuredCommand } from '../../interfaces';
 import { CommandStructureBased, CommandStructure, AsyncCommandStructure } from '../structures';
 import { ApplicationCommandType, Collection } from 'discord.js';
 import { CommandListener } from '../listeners';
