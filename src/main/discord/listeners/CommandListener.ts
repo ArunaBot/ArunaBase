@@ -1,24 +1,43 @@
-import { Interaction, Message, CommandInteraction, GuildMember, InteractionResponse, BooleanCache, EmbedBuilder, ChannelType, DiscordAPIError, AttachmentBuilder, TextChannel } from 'discord.js';
+import { 
+  Interaction, 
+  Message, 
+  CommandInteraction, 
+  GuildMember, 
+  InteractionResponse, 
+  BooleanCache, 
+  EmbedBuilder, 
+  ChannelType, 
+  DiscordAPIError, 
+  AttachmentBuilder, 
+  TextChannel,
+} from 'discord.js';
 import { AsyncCommandStructure, CommandStructure } from '../structures';
 import { IDiscordCommandContext } from '../../interfaces';
 import { DiscordClient } from '../Client';
+import { CommandManager } from '../managers';
 
 export class CommandListener {
-  private additionalContext: { [key: symbol]: any };
-  private client: DiscordClient;
-
-  constructor(client: DiscordClient, enableLegacy: boolean, enableSlash: boolean, additionalContext?: { [key: symbol]: any }) {
-    this.client = client;
+  constructor(
+    private manager: CommandManager,
+    private client: DiscordClient,
+    enableLegacy: boolean,
+    enableSlash: boolean,
+    private additionalContext: { [key: symbol | string]: any } = {},
+  ) {
     if (enableLegacy) this.client.on('messageCreate', this.onMessage.bind(this));
     if (enableSlash) this.client.on('interactionCreate', this.onInteractionCreate.bind(this));
-    this.additionalContext = additionalContext ?? {};
   }
 
   private async onMessage(message: Message): Promise<void> {
-    const prefix = this.client.getCommandManager().getPrefix();
+    if (message.author.bot || !message.content) return;
+    
+    let prefix = this.manager.getPrefix();
+    const customFound = this.manager.getCustomPrefixes().find((customPrefix) => customPrefix.testMessage(message));
+    if (customFound) {
+      prefix = customFound.getPrefix();
+    }
 
-    if (message.author.bot || !message.content || !prefix) return;
-    if (!message.content.startsWith(prefix)) return;
+    if (!prefix || !message.content.startsWith(prefix)) return;
 
     const args = message.content.slice(prefix.length).trim().split(/ +/);
     const commandName = args.shift()?.toLowerCase() ?? '';
@@ -162,7 +181,7 @@ export class CommandListener {
 
   private async executeCommand(commandName: string, context: IDiscordCommandContext, isDM = false): Promise<void> {
     context = { ...context, ...this.additionalContext };
-    const command = this.client.getCommandManager().getCommand(commandName, context.guild?.id);
+    const command = this.manager.getCommand(commandName, context.guild?.id);
     if (!command) return;
     if (!command.isDMAllowed() && isDM) return;
     try {
