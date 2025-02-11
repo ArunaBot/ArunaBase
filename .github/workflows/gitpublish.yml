@@ -31,16 +31,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: "Refresh tags"
         id: tag
         run: git fetch --tags --force
       - name: Get Current version
         id: current_version
         run: echo ::set-output name=version::$(node -p "require('./package.json').version")
-      - name: Echo Debug 
-        run: |
-          echo "${{ steps.current_version.outputs.version }}"
       - name: Create GitHub release
         uses: Roang-zero1/github-create-release-action@master
         with:
