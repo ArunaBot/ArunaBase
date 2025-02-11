@@ -2,26 +2,26 @@
 <p align="center">
 <a href="https://www.npmjs.com/package/arunabase"><img src="https://img.shields.io/npm/v/arunabase.svg?style=for-the-badge&maxAge=3600"></a>
 <a href="https://discord.gg/NqbBgEf" target="_blank"><img src="https://img.shields.io/discord/660610178009530380?color=5865F2&label=&logo=Discord&logoColor=white&style=for-the-badge"></a>
-<a href=""><img src="https://img.shields.io/github/license/arunabot/arunabase?style=for-the-badge&color=0394fc&label=Licen%C3%A7a"></a>
+<a href=""><img src="https://img.shields.io/github/license/arunabot/arunabase?style=for-the-badge&color=0394fc"></a>
 </p>
 
 #
 
-<p align="center"><a href='https://github.com/ArunaBot/ArunaBase/blob/main/.github/translation/readme-enUS.md'>📘 English Readme</a> | <span>📕 Readme em português</span></p>
+<p align="center"><span>📘 English Readme</span> | <a href="https://github.com/ArunaBot/ArunaBase/blob/main/.github/translation/readme-ptBR.md">📕 Readme em português</a></p>
 
 #
 
-<h2 align="center">📖 Sobre</h2>
-&nbsp;&nbsp;&nbsp;&nbsp;A ArunaBase é uma base de código de API para bots do Discord, Twitch, e outras plataformas, feita em TypeScript, com o objetivo de facilitar a criação de bots, com uma estrutura simples e organizada, além de ser totalmente gratuita e de código aberto.
+<h2 align="center">📖 About</h2>
+&nbsp;&nbsp;&nbsp;&nbsp;The ArunaBase is a API code base for Discord, Twitch, and other platforms bots, made in TypeScript, with the objective of making ease the bot creation, with a simple and organized structure, other than being completely free and open source.
 
 <br>
 
-&nbsp;&nbsp;&nbsp;&nbsp;Com a ArunaBase criar um bot capaz de executar comandos, interagir com o usuário, em plataformas como o Discord e a Twitch, além de ter uma configuração simples e intuitiva, é muito fácil e rápido.
+&nbsp;&nbsp;&nbsp;&nbsp;With ArunaBase create a bot capable of running commands, interact with the user, in platforms like Discord and Twitch, other than having a simple and intuitive configuration, its very fast and ease.
 
 <br>
 
-<h2 align="center">💻 Instalação</h2>
-&nbsp;&nbsp;&nbsp;&nbsp;Para instalar a ArunaBase no seu projeto, você precisa ter o NodeJS instalado, e então executar o seguinte comando no seu terminal:
+<h2 align="center">💻 Installing</h2>
+&nbsp;&nbsp;&nbsp;&nbsp;To install ArunaBase in your project, you need first to have NodeJS installed, then run the following command in your terminal:
 
 <br>
 
@@ -39,63 +39,63 @@ yarn add arunabase
 
 <br>
 
-<h2 align="center">⌨ Exemplo de uso</h2>
-&nbsp;&nbsp;&nbsp;&nbsp;Para usar a ArunaBase em seu projeto, você precisa importar uma das classes que ela exporta, e então criar uma instância da classe que você importou, passando como parâmetro um objeto com as configurações do seu bot.
+<h2 align="center">⌨ Use example</h2>
+&nbsp;&nbsp;&nbsp;&nbsp;To use ArunaBase in your project, you need to import one of the classes that it exports, then create an instance of that class, passing as parameter your bot configurations as an object.
 
 <br>
 
-<h2 align="center">🗨 Exemplo de uso com o Discord</h2>
+<h2 align="center">🗨 Use example with Discord</h2>
 
 <br>
 
 ```js
 const { Discord } = require('arunabase');
-// ou
+// or
 import { Discord } from 'arunabase';
 
 const client = new Discord.DiscordClient({
-  botID: '<Id do bot>',
+  botID: '<Bot Id>',
   intents: [
-    Discord.Intents.Flags.MessageContent, // Opcional
+    Discord.Intents.Flags.MessageContent, // Optional
     // ...
   ],
 });
 
-// use client.getCommandManager().generateCommand('Nome do comando', parâmetros do comando); para criar comandos.
-// use client.getCommandManager().registerCommand(comando); para registrar o comando.
+// use client.getCommandManager().generateCommand('Command name', Command parameters); to create a command.
+// use client.getCommandManager().registerCommand(command); to register that command.
 
 client.on('ready', () => {
-  console.log('Bot pronto!');
+  console.log('Bot is ready!');
 });
 
-client.login('<Token do bot>');
+client.login('<Bot token>');
 ```
 
 <br>
 
-<h2 align="center">📄 Licença</h2>
+<h2 align="center">📄 License</h2>
 
 <br>
 
-&nbsp;&nbsp;&nbsp;&nbsp;A ArunaBase é distribuída sob a licença GNU. Veja [LICENSE](/LICENSE) para mais informações.
+&nbsp;&nbsp;&nbsp;&nbsp;The ArunaBase is distributed with the GNU license. See [LICENSE](/LICENSE) for more details.
 
 <br>
 
-<h2 align="center">🤝 Contribuições</h2>
+<h2 align="center">🤝 Contributing</h2>
 
 <br>
 
-&nbsp;&nbsp;&nbsp;&nbsp;Contribuições são o que fazem a comunidade de código aberto um lugar incrível para aprender, inspirar e criar. Qualquer contribuição que você fizer será **muito apreciada**.
+&nbsp;&nbsp;&nbsp;&nbsp;Contributions is what makes the open source community an amazing place and its a wonderful place to learn, inspire and create. Any contribution you make will be **very much appreciated**.
 
-1. Faça um Fork do projeto
-2. Crie sua Feature Branch (`git checkout -b feature/AmazingFeature`)
-3. Commit suas mudanças (`git commit -m 'Add some AmazingFeature'`)
-4. Push para a Branch (`git push origin feature/AmazingFeature`)
-5. Abra um Pull Request
+1. Make a Fork of the Project
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
 <br>
 
-<h2 align="center">😉 Autores</h2>
+<h2 align="center">😉 Authors</h2>
 
 <br>
 
@@ -124,6 +124,6 @@ client.login('<Token do bot>');
 
 #
 
-<p align="center">Feito com 💚 pela equipe da Aruna™.</p>
+<p align="center">Made with 💚 By Aruna™'s team.</p>
 
-<p align="center">Todos os direitos reservados.</p>
+<p align="center">All Reserved Rights.</p>
