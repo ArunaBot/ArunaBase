@@ -1,8 +1,9 @@
-name: Publish API to NPM
+name: Publish to NPM
 
 on:
-  release:
-    types: [published]
+  push:
+    branches:
+      - release
 
 jobs:
   publish:
