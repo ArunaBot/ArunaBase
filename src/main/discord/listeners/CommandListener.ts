@@ -1,7 +1,6 @@
 import { 
   Interaction, 
-  Message, 
-  CommandInteraction, 
+  Message,
   GuildMember, 
   InteractionResponse, 
   BooleanCache, 
@@ -10,6 +9,7 @@ import {
   DiscordAPIError, 
   AttachmentBuilder, 
   TextChannel,
+  Events,
 } from 'discord.js';
 import { AsyncCommandStructure, CommandStructure } from '../structures';
 import { IDiscordCommandContext } from '../../interfaces';
@@ -24,8 +24,8 @@ export class CommandListener {
     enableSlash: boolean,
     private additionalContext: { [key: symbol | string]: any } = {},
   ) {
-    if (enableLegacy) this.client.on('messageCreate', this.onMessage.bind(this));
-    if (enableSlash) this.client.on('interactionCreate', this.onInteractionCreate.bind(this));
+    if (enableLegacy) this.client.on(Events.MessageCreate, this.onMessage.bind(this));
+    if (enableSlash) this.client.on(Events.InteractionCreate, this.onInteractionCreate.bind(this));
   }
 
   private async onMessage(message: Message): Promise<void> {
@@ -116,10 +116,9 @@ export class CommandListener {
     }
   }
 
-  private async onInteractionCreate(interaction: Interaction): Promise<void> {
-    if (!interaction.isCommand()) return;
+  private async onInteractionCreate(ctx: Interaction): Promise<void> {
+    if (!ctx.isCommand()) return;
 
-    const ctx = interaction as CommandInteraction;
     const commandName = ctx.commandName;
 
     try {
