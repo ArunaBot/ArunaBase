@@ -1,12 +1,16 @@
 {
   "name": "arunabase",
-  "version": "1.0.0-ALPHA.6",
+  "version": "1.0.0-ALPHA.7",
   "description": "An API made to help developers what works with discord and twitch.",
   "main": "build/index.js",
-  "types": "src/main/index.ts",
+  "types": "build/index.d.ts",
+  "type": "commonjs",
+  "files": [
+    "build"
+  ],
   "scripts": {
     "build": "npx tsc -p .",
-    "pdeploy": "node scripts/prepareDeploy.js",
+    "prepack": "npm run build",
     "lint": "npx eslint src/main --fix",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -27,28 +31,27 @@
   },
   "homepage": "https://github.com/ArunaBot/ArunaBase#readme",
   "engines": {
-    "node": ">=18.8.0"
+    "node": ">=22.12.0"
   },
   "dependencies": {
     "@promisepending/logger.js": "^1.1.1",
     "@twitchapis/twitch.js": "^2.0.0-beta.3",
-    "arunabase": "file:",
     "arunacore-api": "^1.0.0-BETA.0",
-    "discord.js": "^14.16.3",
-    "express": "^4.21.1",
+    "discord.js": "^14.18.0",
+    "express": "^4.21.2",
     "path-to-regexp": "^8.2.0"
   },
   "devDependencies": {
-    "@eslint/eslintrc": "^3.1.0",
-    "@eslint/js": "^9.14.0",
+    "@eslint/eslintrc": "^3.2.0",
+    "@eslint/js": "^9.20.0",
     "@types/express": "^5.0.0",
-    "@typescript-eslint/eslint-plugin": "^8.12.2",
-    "@typescript-eslint/parser": "^8.12.2",
-    "eslint": "^9.14.0",
+    "@typescript-eslint/eslint-plugin": "^8.24.0",
+    "@typescript-eslint/parser": "^8.24.0",
+    "eslint": "^9.20.0",
     "eslint-plugin-import": "^2.31.0",
     "eslint-plugin-node": "^11.1.0",
-    "eslint-plugin-promise": "^7.1.0",
-    "globals": "^15.11.0",
-    "typescript": "^5.6.3"
+    "eslint-plugin-promise": "^7.2.1",
+    "globals": "^15.14.0",
+    "typescript": "^5.7.3"
   }
 }

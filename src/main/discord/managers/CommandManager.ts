@@ -1,5 +1,5 @@
- import { EHTTP, IAsyncCommandOptions, ICommandGuildScope, ICommandManagerOptions, ICommandOptions, IEndPointStructure, StructuredCommand } from '../../interfaces';
-import { CommandStructureBased, CommandStructure, AsyncCommandStructure } from '../structures';
+import { EConditionalPrefixType, EHTTP, IAsyncCommandOptions, ICommandGuildScope, ICommandManagerOptions, ICommandOptions, IEndPointStructure, StructuredCommand } from '../../interfaces';
+import { CommandStructureBased, CommandStructure, AsyncCommandStructure, ConditionalPrefixStructure } from '../structures';
 import { ApplicationCommandType, Collection } from 'discord.js';
 import { CommandListener } from '../listeners';
 import { HTTPClient } from '../utils/';
@@ -28,13 +28,6 @@ import { HTTPClient } from '../utils/';
  */
 export class CommandManager {
   /**
-   * A collection of commands that can be used in any Discord guild.
-   * @type {Collection<string[], CommandStructureBased>}
-   * @private
-   */
-  private globalCommands: Collection<string[], CommandStructureBased> = new Collection();
-
-  /**
    * A collection of commands that can only be used in specific Discord guilds.
    * @type {Collection<ICommandGuildScope, CommandStructureBased>}
    * @private
@@ -42,16 +35,31 @@ export class CommandManager {
   private guildCommands: Collection<ICommandGuildScope, CommandStructureBased> = new Collection();
 
   /**
+   * A collection of commands that can be used in any Discord guild.
+   * @type {Collection<string[], CommandStructureBased>}
+   * @private
+   */
+  private globalCommands: Collection<string[], CommandStructureBased> = new Collection();
+
+  /**
+   * An array of custom prefixes that can be used to execute commands.
+   * @type {ConditionalPrefixStructure[]}
+   * @private
+   */
+  private customPrefixes: ConditionalPrefixStructure[] = [];
+
+  /**
    * The options for this command manager.
    * @type {ICommandManagerOptions}
    * @private
    */
   private options: ICommandManagerOptions;
-  private commandListener: CommandListener;
-  private httpClient: HTTPClient;
+
   // private endpointBufferInstance: Generator<unknown, CommandStructureBased, unknown>;
   private endpointsBuffer: IEndPointStructure[];
+  private commandListener: CommandListener;
   private processingBuffer: boolean;
+  private httpClient: HTTPClient;
 
   /**
    * Creates an instance of the CommandManager class.
@@ -63,7 +71,7 @@ export class CommandManager {
     this.options.allowSlashCommands = this.options.allowSlashCommands ?? true;
     if (!this.options.prefix) this.options.allowLegacyCommands = false;
     this.httpClient = new HTTPClient();
-    this.commandListener = new CommandListener(this.options.client, this.options.allowLegacyCommands, this.options.allowSlashCommands, this.options.additionalContext ?? {});
+    this.commandListener = new CommandListener(this, this.options.client, this.options.allowLegacyCommands, this.options.allowSlashCommands, this.options.additionalContext ?? {});
 
     this.endpointsBuffer = [];
     this.processingBuffer = false;
@@ -154,6 +162,11 @@ export class CommandManager {
     return this.globalCommands.find((value, key) => key.includes(name)) ?? null;
   }
 
+  /**
+   * Checks if a global command exists by its name.
+   * @param {string | string[]} name - The name of the command.
+   * @returns {boolean}
+   */
   public hasGlobalCommand(name: string | string[]): boolean {
     if (name instanceof Array) {
       return this.globalCommands.has(name);
@@ -212,6 +225,12 @@ export class CommandManager {
     return command;
   }
 
+  /**
+   * Registers multiple commands.
+   * @note This method will override all commands (slash, user and message) for this bot.
+   * @param commands The commands to register.
+   * @returns The registered commands.
+   */
   public async bulkRegisterCommand(commands: CommandStructureBased[]): Promise<CommandStructureBased[]> {
     if (!commands) throw new Error('CommandManager: Command is not defined.');
     if (commands.length === 0) throw new Error('CommandManager: Command array is empty.');
@@ -230,7 +249,7 @@ export class CommandManager {
     const slashCommands = globalCommands.filter((command) => command.isSlash());
 
     const structuredCommands: StructuredCommand[] = [];
-    const slashStructuredCommands = [];
+    const slashStructuredCommands: StructuredCommand[] = [];
 
     for (const command of globalCommands) {
       const structuredCommand: StructuredCommand = {
@@ -276,6 +295,13 @@ export class CommandManager {
     return commandsResult;
   }
 
+  /**
+   * Registers a new guild-specific command.
+   * @param command The command to register.
+   * @returns The registered command.
+   * 
+   * @todo This method is not implemented yet.
+   */
   public async registerGuildCommand(command: CommandStructureBased | CommandStructureBased[]): Promise<CommandStructureBased | CommandStructureBased[]> {
     if (!command) throw new Error('CommandManager: Command is not defined.');
     if (command instanceof Array) return this.bulkRegisterGuildCommand(command);
@@ -301,11 +327,62 @@ export class CommandManager {
     throw new Error('Not implemented 🦊');
   }
 
+  /**
+   * Registers multiple guild-specific commands.
+   * @note This method will override all commands (slash, user and message) for this specific guild.
+   * @param commands The commands to register.
+   * @returns The registered commands.
+   * 
+   * @todo This method is not implemented yet.
+  */
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   public async bulkRegisterGuildCommand(commands: CommandStructureBased[]): Promise<CommandStructureBased[]> {
     throw new Error('Not implemented');
   }
 
+  /**
+   * Registers a custom prefix that can be used to execute commands.
+   * @param prefix The custom prefix.
+   * @param conditions The conditions that must be met for the prefix to be used.
+   * @throws {Error} If some custom prefix with the one or more conditions already exists.
+   */
+  public registerCustomPrefix(prefix: string, condition: { type: EConditionalPrefixType, value: string }): boolean {
+    if (!prefix) throw new Error('CommandManager: Prefix is not defined.');
+    if (!condition) throw new Error('CommandManager: Condition is not defined.');
+
+    if (this.customPrefixes.some((p) => p.getConditions().some((c) => c === condition))) throw new Error('CommandManager: Custom prefix with the same condition already exists.');
+
+    const c = this.customPrefixes.find((customPrefix) => prefix === customPrefix.getPrefix());
+    if (c) {
+      c.addCondition(condition.type, condition.value);
+      return true;
+    }
+
+    this.customPrefixes.push(new ConditionalPrefixStructure(prefix, [condition]));
+    return true;
+  }
+
+  /**
+   * Unregisters a custom prefix.
+   * @param condition The condition that must be met for the prefix to be used.
+   * @returns Whether the custom prefix was unregistered successfully.
+   */
+  public unregisterCustomPrefix(condition: { type: EConditionalPrefixType, value: string }): boolean {
+    if (!condition) throw new Error('CommandManager: Condition is not defined.');
+    
+    const customPrefix = this.customPrefixes.find((p) => p.getConditions().some((c) => c.type === condition.type && c.value === condition.value));
+    if (!customPrefix) return false;
+
+    customPrefix.removeCondition(condition.type, condition.value);
+    if (customPrefix.getConditions().length === 0) this.customPrefixes = this.customPrefixes.filter((p) => p !== customPrefix);
+    return true;
+  }
+
+  /**
+   * Unregisters a command.
+   * @param command The command to unregister.
+   * @returns Whether the command was unregistered successfully.
+   */
   public async unregisterCommand(command: CommandStructureBased): Promise<boolean> {
     if (!command) throw new Error('CommandManager: Command is not defined.');
     if (!command.isGlobalCommand()) return this.unregisterGuildCommand(command);
@@ -333,6 +410,10 @@ export class CommandManager {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   public async unregisterGuildCommand(command: CommandStructureBased): Promise<boolean> {
     throw new Error('Not implemented');
+  }
+
+  public getCustomPrefixes(): ConditionalPrefixStructure[] {
+    return this.customPrefixes;
   }
 
   /**

@@ -1,13 +1,15 @@
+import './utils/Patches';
 import { ClientOptions, Client as DJSClient } from 'discord.js';
 import { IDiscordConfiguration } from '../interfaces';
 import { Logger } from '@promisepending/logger.js';
-import { CommandManager } from './managers';
+import { ButtonManager, CommandManager } from './managers';
 
 export class DiscordClient extends DJSClient {
-  private allowSlashCommands: boolean;
-  private allowLegacyCommands: boolean;
-  private commandManager: CommandManager;
   private configuration: IDiscordConfiguration;
+  private commandManager: CommandManager;
+  private buttonManager: ButtonManager;
+  private allowLegacyCommands: boolean;
+  private allowSlashCommands: boolean;
   private prefix: string;
   private logger: Logger;
 
@@ -33,6 +35,8 @@ export class DiscordClient extends DJSClient {
       allowSlashCommands: this.allowSlashCommands,
       additionalContext: options.additionalCommandContext,
     });
+
+    this.buttonManager = new ButtonManager(this);
   }
 
   public getConfiguration(): IDiscordConfiguration {
