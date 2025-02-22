@@ -19,6 +19,7 @@ export interface IDiscordCommandContext {
   editReply: (...content: (string | EmbedBuilder | AttachmentBuilder)[]) => Promise<Message<boolean>> | Promise<Message<BooleanCache<any>>>;
   discreteReply: (...content: (string | EmbedBuilder | AttachmentBuilder)[]) => Promise<Message<boolean>> | Promise<InteractionResponse<boolean>>;
   deleteReply: () => Promise<void | Message<boolean>>;
+  deferReply: () => Promise<void | InteractionResponse<boolean>>;
   messageReplyContent?: any,
   args: (string | number | boolean | User | undefined)[];
   author: User;
