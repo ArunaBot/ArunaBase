@@ -106,6 +106,9 @@ export class CommandListener {
           if (!context.messageReplyContent || !(context.messageReplyContent as Message<boolean>)?.deletable) return Promise.resolve();
           return (context.messageReplyContent as Message<boolean>).delete();
         },
+        deferReply: async (): Promise<void> => {
+          return (message.channel as TextChannel).sendTyping();
+        },
         args,
         message,
       };
@@ -140,6 +143,9 @@ export class CommandListener {
         },
         deleteReply: async (): Promise<void> => {
           return ctx.deleteReply();
+        },
+        deferReply: async (): Promise<InteractionResponse<boolean>> => {
+          return ctx.deferReply();
         },
         interaction: ctx,
       };
