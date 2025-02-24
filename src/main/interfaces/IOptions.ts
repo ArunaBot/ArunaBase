@@ -1,4 +1,4 @@
-import { ApplicationCommandOptionType, ApplicationCommandPermissions, ApplicationCommandType, APIApplicationCommandOptionChoice, CategoryChannelType } from 'discord.js';
+import { ApplicationCommandOptionType, ApplicationCommandType, APIApplicationCommandOptionChoice, CategoryChannelType } from 'discord.js';
 import { IDiscordCommandContext } from './IDiscordCommandContext';
 import { Logger } from '@promisepending/logger.js';
 import { DiscordClient } from '../discord';
@@ -41,10 +41,13 @@ export interface ICommandOptions {
   isSlashCommand?: boolean;
   allowDM?: boolean;
   command?: (context: IDiscordCommandContext) => void;
+  // FIXME: We must create a special command type for guild commands due to discord api specificities
+  /**
+   * @deprecated - This will be removed when guild commands are truly implemented
+   */
   guildID?: string;
   aliases?: string[];
   parameters?: ICommandParameter[];
-  permissions?: ApplicationCommandPermissions[];
   type?: ApplicationCommandType;
   nsfw?: boolean;
 }
