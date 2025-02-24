@@ -10,6 +10,7 @@ import {
   AttachmentBuilder, 
   TextChannel,
   Events,
+  MessageFlags,
 } from 'discord.js';
 import { AsyncCommandStructure, CommandStructure } from '../structures';
 import { IDiscordCommandContext } from '../../interfaces';
@@ -144,7 +145,8 @@ export class CommandListener {
         deleteReply: async (): Promise<void> => {
           return ctx.deleteReply();
         },
-        deferReply: async (): Promise<InteractionResponse<boolean>> => {
+        deferReply: async (ephemeral = false): Promise<InteractionResponse<boolean>> => {
+          if (ephemeral) return ctx.deferReply({ flags: MessageFlags.Ephemeral });
           return ctx.deferReply();
         },
         interaction: ctx,

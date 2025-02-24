@@ -42,7 +42,7 @@ export class ButtonStructure {
 
   public async execute(ctx: ButtonInteraction): Promise<void> {
     if (this.callback) await this.callback(ctx);
-    else ctx.deferUpdate();
+    else await ctx.deferUpdate();
   }
 
   public setIsDisabled(disabled: boolean): this {
