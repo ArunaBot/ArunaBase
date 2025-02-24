@@ -42,7 +42,10 @@ export interface ICommandOptions {
   allowDM?: boolean;
   command?: (context: IDiscordCommandContext) => void;
   // FIXME: We must create a special command type for guild commands due to discord api specificities
-  // guildID?: string;
+  /**
+   * @deprecated - This will be removed when guild commands are truly implemented
+   */
+  guildID?: string;
   aliases?: string[];
   parameters?: ICommandParameter[];
   type?: ApplicationCommandType;
