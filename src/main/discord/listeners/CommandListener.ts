@@ -1,21 +1,21 @@
 import { 
-  Interaction, 
+  Interaction,
   Message,
-  GuildMember, 
-  InteractionResponse, 
-  BooleanCache, 
-  EmbedBuilder, 
-  ChannelType, 
-  DiscordAPIError, 
-  AttachmentBuilder, 
+  GuildMember,
+  InteractionResponse,
+  BooleanCache,
+  ChannelType,
+  DiscordAPIError,
   TextChannel,
   Events,
   MessageFlags,
+  EmbedBuilder,
+  AttachmentBuilder,
 } from 'discord.js';
-import { AsyncCommandStructure, CommandStructure } from '../structures';
+import { AsyncCommandStructure, CommandStructure, MessageStructure } from '../structures';
 import { IDiscordCommandContext } from '../../interfaces';
 import { DiscordClient } from '../Client';
-import { CommandManager } from '../managers';
+import { ButtonManager, CommandManager } from '../managers';
 
 export class CommandListener {
   constructor(
@@ -29,6 +29,7 @@ export class CommandListener {
     if (enableSlash) this.client.on(Events.InteractionCreate, this.onInteractionCreate.bind(this));
   }
 
+  // FIXME: This code is simply horrible and needs URGENT refactoring.
   private async onMessage(message: Message): Promise<void> {
     if (message.author.bot || !message.content) return;
     
@@ -51,56 +52,111 @@ export class CommandListener {
         member: message.member,
         author: message.author,
         messageReplyContent: null,
-        reply: async (...content: (string | EmbedBuilder | AttachmentBuilder)[]): Promise<Message<boolean>> => {
+        reply: async (...options: [MessageStructure] | (string | EmbedBuilder | AttachmentBuilder)[]): Promise<Message<boolean>> => {
           return new Promise(async (resolve, reject) => {
-            message.reply(this.replyParser(...content)).then((result) => {
-              context.messageReplyContent = result;
-              return resolve(result);
-            }).catch((error: DiscordAPIError) => {
-              if (error.code === 10008 || error.code === 50035) {
-                (message.channel as TextChannel).send(this.replyParser(...content)).then((result) => {
-                  context.messageReplyContent = result;
-                  return resolve(result);
-                }).catch((reason) => {
-                  return reject(reason);
-                });
-              } else {
-                return reject(error);
-              }
-            });
+            if (options.length === 1 && options[0] instanceof MessageStructure) {
+              message._reply(options[0].toDiscordMessage()).then((result) => {
+                context.messageReplyContent = result;
+                ButtonManager.getInstance().registerButtons((options[0] as MessageStructure).getButtons());
+                return resolve(result);
+              }).catch((error: DiscordAPIError) => {
+                if (error.code === 10008 || error.code === 50035) {
+                  (message.channel as TextChannel).send(options[0] as MessageStructure).then((result) => {
+                    context.messageReplyContent = result;
+                    return resolve(result);
+                  }).catch((reason) => {
+                    return reject(reason);
+                  });
+                } else {
+                  return reject(error);
+                }
+              });
+            } else {
+              const parsedOptions = this.replyParser(...(options as (string | EmbedBuilder | AttachmentBuilder)[]));
+              message.reply(parsedOptions).then((result) => {
+                context.messageReplyContent = result;
+                return resolve(result);
+              }).catch((error: DiscordAPIError) => {
+                if (error.code === 10008 || error.code === 50035) {
+                  (message.channel as TextChannel).send(parsedOptions).then((result) => {
+                    context.messageReplyContent = result;
+                    return resolve(result);
+                  }).catch((reason) => {
+                    return reject(reason);
+                  });
+                } else {
+                  return reject(error);
+                }
+              });
+            }
           });
         },
-        editReply: async (...content: (string | EmbedBuilder | AttachmentBuilder)[]): Promise<Message> => {
-          if (context.messageReplyContent && (context.messageReplyContent as Message<boolean>).editable) {
-            return (context.messageReplyContent as Message<boolean>).edit(this.replyParser(...content));
+        editReply: async (...options: [MessageStructure] | (string | EmbedBuilder | AttachmentBuilder)[]): Promise<Message> => {
+          if (options.length === 1 && options[0] instanceof MessageStructure) {
+            if (context.messageReplyContent && (context.messageReplyContent as Message<boolean>).editable) {
+              return (context.messageReplyContent as Message<boolean>).edit(options[0]);
+            }
+            return (context.reply(options[0]) as Promise<Message<boolean>>);
+          } else {
+            const parsedOptions = this.replyParser(...(options as (string | EmbedBuilder | AttachmentBuilder)[]));
+            if (context.messageReplyContent && (context.messageReplyContent as Message<boolean>).editable) {
+              return (context.messageReplyContent as Message<boolean>).edit(parsedOptions);
+            }
+            return (context.reply(...(options as (string | EmbedBuilder | AttachmentBuilder)[])) as Promise<Message<boolean>>);
           }
-          return (context.reply(...content) as Promise<Message<boolean>>);
         },
-        discreteReply: async (...content: (string | EmbedBuilder | AttachmentBuilder)[]): Promise<Message<boolean>> => {
+        discreteReply: async (...options: [MessageStructure] | (string | EmbedBuilder | AttachmentBuilder)[]): Promise<Message<boolean>> => {
           return new Promise(async (resolve, reject) => {
-            const parsedContent = this.replyParser(...content);
-            message.reply({
-              ...parsedContent,
-              allowedMentions: {
-                repliedUser: false,
-              },
-            }).then((result) => {
-              context.messageReplyContent = result;
-              return resolve(result);
-            }).catch((error: DiscordAPIError) => {
+            if (options.length === 1 && options[0] instanceof MessageStructure) {
+              const parsedContent = options[0].toDiscordMessage();
+              message._reply({
+                ...parsedContent,
+                allowedMentions: {
+                  repliedUser: false,
+                },
+              }).then((result) => {
+                context.messageReplyContent = result;
+                ButtonManager.getInstance().registerButtons((options[0] as MessageStructure).getButtons());
+                return resolve(result);
+              }).catch((error: DiscordAPIError) => {
+                // 10008: Unknown Message
+                // 50035: Cannot send messages to this user
+                if (error.code === 10008 || error.code === 50035) {
+                  (message.channel as TextChannel).send(options[0] as MessageStructure).then((result) => {
+                    context.messageReplyContent = result;
+                    return resolve(result);
+                  }).catch((reason) => {
+                    return reject(reason);
+                  });
+                } else {
+                  return reject(error);
+                }
+              });
+            } else {
+              const parsedContent = this.replyParser(...options as (string | EmbedBuilder | AttachmentBuilder)[]);
+              message.reply({
+                ...parsedContent,
+                allowedMentions: {
+                  repliedUser: false,
+                },
+              }).then((result) => {
+                context.messageReplyContent = result;
+                return resolve(result);
+              }).catch((error: DiscordAPIError) => {
               // 10008: Unknown Message
               // 50035: Cannot send messages to this user
-              if (error.code === 10008 || error.code === 50035) {
-                (message.channel as TextChannel).send(this.replyParser(...content)).then((result) => {
-                  context.messageReplyContent = result;
-                  return resolve(result);
-                }).catch((reason) => {
-                  return reject(reason);
-                });
-              } else {
-                return reject(error);
-              }
-            });
+                if (error.code === 10008 || error.code === 50035) {
+                  (message.channel as TextChannel).send(this.replyParser(...options as (string | EmbedBuilder | AttachmentBuilder)[])).then((result) => {
+                    context.messageReplyContent = result;
+                    return resolve(result);
+                  }).catch((reason) => {
+                    return reject(reason);
+                  });
+                } else {
+                  return reject(error);
+                }
+              });
+            }
           });
         },
         deleteReply: async (): Promise<void | Message<boolean>> => {
@@ -133,14 +189,36 @@ export class CommandListener {
         member: ctx.member as GuildMember,
         author: ctx.user,
         args: ctx.options.data.map((arg) => arg.value),
-        reply: async (...content: (string | EmbedBuilder | AttachmentBuilder)[]): Promise<InteractionResponse<boolean>> => {
-          return await ctx.reply(this.replyParser(...content));
+        reply: async (...options: [MessageStructure] | (string | EmbedBuilder | AttachmentBuilder)[]): Promise<Message<BooleanCache<any>> | InteractionResponse<boolean>> => {
+          if (options.length === 1 && options[0] instanceof MessageStructure) {
+            // Caso seja um único argumento do tipo MessageStructure
+            return await ctx.reply(options[0]);
+          } else {
+            // Caso sejam múltiplos argumentos, utiliza a função replyParser
+            const parsedOptions = this.replyParser(...(options as (string | EmbedBuilder | AttachmentBuilder)[]));
+            return await ctx.reply(parsedOptions);
+          }
         },
-        editReply: async (...content: (string | EmbedBuilder | AttachmentBuilder)[]): Promise<Message<BooleanCache<any>>> => {
-          return await ctx.editReply(this.replyParser(...content));
+        editReply: async (...options: [MessageStructure] | (string | EmbedBuilder | AttachmentBuilder)[]): Promise<Message<BooleanCache<any>>> => {
+          if (options.length === 1 && options[0] instanceof MessageStructure) {
+            // Caso seja um único argumento do tipo MessageStructure
+            return await ctx.editReply(options[0]);
+          } else {
+            // Caso sejam múltiplos argumentos, utiliza a função replyParser
+            const parsedOptions = this.replyParser(...(options as (string | EmbedBuilder | AttachmentBuilder)[]));
+            return await ctx.editReply(parsedOptions);
+          }
         },
-        discreteReply: async (...content: (string | EmbedBuilder | AttachmentBuilder)[]): Promise<InteractionResponse<boolean>> => {
-          return await ctx.reply({ ...this.replyParser(...content), ephemeral: true });
+        discreteReply: async (...options: [MessageStructure] | (string | EmbedBuilder | AttachmentBuilder)[]): Promise<Message<BooleanCache<any>>> => {
+          if (options.length === 1 && options[0] instanceof MessageStructure) {
+            return await ctx.reply({ ...options[0].toDiscordMessage(), ephemeral: true }).then((result) => {
+              ButtonManager.getInstance().registerButtons((options[0] as MessageStructure).getButtons());
+              return result;
+            });
+          } else {
+            const parsedOptions = this.replyParser(...(options as (string | EmbedBuilder | AttachmentBuilder)[]));
+            return await ctx.reply({ ...parsedOptions, ephemeral: true });
+          }
         },
         deleteReply: async (): Promise<void> => {
           return ctx.deleteReply();
@@ -171,7 +249,7 @@ export class CommandListener {
       files: [],
     };
 
-    params.forEach((item) => {
+    for (const item of params) {
       if (typeof item === 'string') {
         result.content += item;
       } else if (item instanceof EmbedBuilder) {
@@ -181,7 +259,7 @@ export class CommandListener {
       } else {
         throw new Error('Invalid parameter type!');
       }
-    });
+    }
 
     return result;
   }

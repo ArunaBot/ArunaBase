@@ -11,13 +11,20 @@ import {
   TextBasedChannel,
   User,
 } from 'discord.js';
-import { DiscordClient } from '../discord';
+import { DiscordClient, MessageStructure } from '../discord';
 
 export interface IDiscordCommandContext {
   client: DiscordClient;
-  reply: (...content: (string | EmbedBuilder | AttachmentBuilder)[]) => Promise<Message<boolean>> | Promise<InteractionResponse<boolean>>;
-  editReply: (...content: (string | EmbedBuilder | AttachmentBuilder)[]) => Promise<Message<boolean>> | Promise<Message<BooleanCache<any>>>;
-  discreteReply: (...content: (string | EmbedBuilder | AttachmentBuilder)[]) => Promise<Message<boolean>> | Promise<InteractionResponse<boolean>>;
+
+  reply(message: MessageStructure): Promise<Message<boolean> | InteractionResponse<boolean>>;
+  reply(...options: (string | EmbedBuilder | AttachmentBuilder)[]): Promise<Message<boolean> | InteractionResponse<boolean>>;
+
+  editReply(message: MessageStructure): Promise<Message<boolean>> | Promise<Message<BooleanCache<any>>>;
+  editReply(...options: (string | EmbedBuilder | AttachmentBuilder)[]): Promise<Message<boolean>> | Promise<Message<BooleanCache<any>>>;
+
+  discreteReply(message: MessageStructure): Promise<Message<boolean>> | Promise<InteractionResponse<boolean>>;
+  discreteReply(...options: (string | EmbedBuilder | AttachmentBuilder)[]): Promise<Message<boolean>> | Promise<InteractionResponse<boolean>>;
+
   deleteReply: () => Promise<void | Message<boolean>>;
   deferReply: (ephemeral?: boolean) => Promise<void | InteractionResponse<boolean>>;
   messageReplyContent?: any,
