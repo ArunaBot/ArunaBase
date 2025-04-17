@@ -6,6 +6,10 @@ class CommandStructureBase {
   private name: string;
   private description: string;
   private localizations: { [key: string]: ILocalizationBase } | null;
+
+  /**
+   * @deprecated - Do not use this property, it will be removed in the future when guild commands are truly implemented
+   */
   private guildID: string | null;
 
   protected isAsync?: boolean;
@@ -206,6 +210,10 @@ class CommandStructureBase {
     return this.localizations ?? {};
   }
 
+  /**
+   * @deprecated - Do not use this property, it will be removed in the future when guild commands are truly implemented
+   * @returns The guild ID if the command is a guild command, otherwise 0
+   */
   public getGuildID(): string {
     if (!this.guildID) return '0';
     return this.guildID;
