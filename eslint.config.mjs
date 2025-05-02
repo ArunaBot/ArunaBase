@@ -15,7 +15,7 @@ const compat = new FlatCompat({
 });
 
 export default [{
-  ignores: ['build/**/*', 'scripts/**/*'],
+  ignores: ['build/**/*', 'scripts/**/*', 'eslint.config.mjs', 'node_modules/**/*', 'tests/**/*'],
 }, ...compat.extends(
   'eslint:recommended',
   'plugin:@typescript-eslint/eslint-recommended',
@@ -44,6 +44,7 @@ export default [{
     '@typescript-eslint/ban-ts-ignore': ['off'],
     '@typescript-eslint/explicit-function-return-type': 'error',
     '@typescript-eslint/interface-name-prefix': ['off'],
+    "@typescript-eslint/no-deprecated": "warn",
 
     '@typescript-eslint/no-explicit-any': ['off', {
       fixToUnknown: true,
@@ -85,7 +86,7 @@ export default [{
     'linebreak-style': ['error', 'unix'],
 
     'max-len': ['warn', {
-      code: 250,
+      code: 200,
       ignoreComments: true,
       ignoreUrls: true,
     }],

@@ -27,7 +27,7 @@ export interface IDiscordCommandContext {
 
   deleteReply: () => Promise<void | Message<boolean>>;
   deferReply: (ephemeral?: boolean) => Promise<void | InteractionResponse<boolean>>;
-  messageReplyContent?: any,
+  messageReplyContent?: Message<boolean> | null,
   args: (string | number | boolean | User | undefined)[];
   author: User;
   member?: GuildMember | null;
