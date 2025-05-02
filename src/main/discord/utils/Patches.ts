@@ -68,7 +68,7 @@ Message.prototype.edit = async function (options: string | MessagePayload | Mess
 
 CommandInteraction.prototype._reply = CommandInteraction.prototype.reply;
 
-// @ts-expect-error - This override the original reply method, wich is preserved in _reply
+// @ts-expect-error - This override the original reply method, which is preserved in _reply
 CommandInteraction.prototype.reply =
   async function (options: string | MessagePayload | InteractionReplyOptions | MessageStructure): Promise<Message<BooleanCache<any>>> {
     if (options instanceof MessageStructure) {

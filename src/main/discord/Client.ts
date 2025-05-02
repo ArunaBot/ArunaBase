@@ -1,8 +1,8 @@
 import './utils/Patches';
 import { ClientOptions, Client as DJSClient } from 'discord.js';
+import { ButtonManager, CommandManager } from './managers';
 import { IDiscordConfiguration } from '../interfaces';
 import { Logger } from '@promisepending/logger.js';
-import { ButtonManager, CommandManager } from './managers';
 
 export class DiscordClient extends DJSClient {
   private configuration: IDiscordConfiguration;
