@@ -1,5 +1,6 @@
 import { IncomingMessage, request as httpRequest } from 'http';
 import { request as httpsRequest } from 'https';
+import { URL } from 'url';
 
 export abstract class HTTPClientBase {
   /**
@@ -10,36 +11,20 @@ export abstract class HTTPClientBase {
    */
   protected async sendRequest(url: string, options: any): Promise<IncomingMessage> {
     return new Promise((resolve, reject) => {
-      let request;
-      const urlHost = url.startsWith('http') ? url.split('://')[1].split('/')[0] : url.split('/')[0];
-      const urlPath = '/' + url.split('/').slice(url.startsWith('http') ? 3 : 1).join('/');
-      const lastColon = urlHost.lastIndexOf(':');
-      var urlPort = Number(urlHost.slice(lastColon + 1));
-      urlPort = isNaN(urlPort) ? 443 : urlPort;
+      const parsedURL = new URL(url);
+      const urlPort = parsedURL.port ? Number(parsedURL.port) : 443;
       const requestOptions = {
-        hostname: urlHost,
+        hostname: parsedURL.hostname,
         port: urlPort,
-        path: urlPath || '/',
+        path: `${parsedURL.pathname}${parsedURL.search}` || '/',
         ...options,
       };
-      if (options.protocol.startsWith('https')) {
-        requestOptions.protocol = 'https:';
-        request = httpsRequest(requestOptions, (response) => {
-          resolve(response);
-        });
-      } else {
-        request = httpRequest(requestOptions, (response) => {
-          resolve(response);
-        });
-      }
+      if (options.protocol.startsWith('https')) requestOptions.protocol = 'https:';
+      const request = (options.protocol.startsWith('https') ? httpsRequest : httpRequest)(requestOptions, (response) => { resolve(response); });
 
-      request.on('error', (error) => {
-        reject(error);
-      });
+      request.on('error', (error) => { reject(error); });
 
-      if (options.body) {
-        request.write(options.body);
-      }
+      if (options.body) request.write(options.body);
 
       request.end();
     });
