@@ -7,16 +7,10 @@ class CommandStructureBase {
   private description: string;
   private localizations: { [key: string]: ILocalizationBase } | null;
 
-  /**
-   * @deprecated - Do not use this property, it will be removed in the future when guild commands are truly implemented
-   */
-  private guildID: string | null;
-
   protected isAsync?: boolean;
   protected isSlashCommand: boolean;
   protected isLegacyCommand: boolean;
   protected isLocalized: boolean;
-  protected isGlobal: boolean;
   protected allowDM: boolean;
   protected aliases: string[];
   protected parameters: ICommandParameter[];
@@ -56,14 +50,6 @@ class CommandStructureBase {
       this.parameters = options.parameters;
     } else {
       this.parameters = [];
-    }
-
-    if (options.guildID) {
-      this.isGlobal = false;
-      this.guildID = options.guildID;
-    } else {
-      this.isGlobal = true;
-      this.guildID = null;
     }
 
     var subCommandVerifier = 0;
@@ -210,15 +196,6 @@ class CommandStructureBase {
     return this.localizations ?? {};
   }
 
-  /**
-   * @deprecated - Do not use this property, it will be removed in the future when guild commands are truly implemented
-   * @returns The guild ID if the command is a guild command, otherwise 0
-   */
-  public getGuildID(): string {
-    if (!this.guildID) return '0';
-    return this.guildID;
-  }
-
   public getType(): number {
     return this.type;
   }
@@ -255,10 +232,6 @@ class CommandStructureBase {
 
   public isLocalizedCommand(): boolean {
     return this.isLocalized;
-  }
-
-  public isGlobalCommand(): boolean {
-    return this.isGlobal;
   }
 
   public isNSFW(): boolean {

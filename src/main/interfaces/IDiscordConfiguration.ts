@@ -9,8 +9,3 @@ export interface IDiscordConfiguration extends ClientOptions {
   allowLegacyCommands?: boolean,
   additionalCommandContext?: { [key: symbol|string]: any },
 }
-
-export interface ICommandGuildScope {
-  guildID: string;
-  commandAliases: string[];
-}

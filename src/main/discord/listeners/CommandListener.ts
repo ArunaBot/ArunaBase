@@ -186,7 +186,7 @@ export class CommandListener {
 
   private async executeCommand(commandName: string, context: IDiscordCommandContext, isDM = false): Promise<void> {
     context = { ...context, ...this.additionalContext };
-    const command = this.manager.getCommand(commandName, context.guild?.id);
+    const command = this.manager.getCommand(commandName);
     if (!command) return Promise.resolve();
     if (!command.isDMAllowed() && isDM) return Promise.resolve();
     try {
