@@ -1,25 +1,22 @@
 # Changelog
 
 ## v1.0.0-ALPHA.10
-- [BREAKING]: All guild commands related methods have been removed;
-  - This change should not affect anyone, since the guild commands weren't yet implemented;
+- [BREAKING]: All methods related to guild commands have been removed;
+  - This change shouldn't affect anyone, as guild commands haven't been implemented yet;
   - A new system for guild commands will be implemented in the future;
 
 - [BREAKING]: The HTTP server was removed;
   - This change has introduced to simplify the codebase and make it more maintainable;
-  - The HTTP server wasn't used in any of the examples, it's impact should be minimal for the users;
-  - If you need a HTTP server, you may use the `express` package yourself;
+  - The HTTP server wasn't used in any of the examples and had no documentation, so its impact on users should be minimal;
 
 - [DEPRECATED]: Some methods are now deprecated:
   - `CommandManager#generateAsyncCommand` is deprecated, use `CommandManager#generateCommand` instead;
-  - `CommandManager#getGlobalCommands` is deprecated, use `CommandManager#getGlobalCommands` instead;
   - `CommandManager#getGlobalCommand` is deprecated, use `CommandManager#getCommand` instead;
   - `CommandManager#hasGlobalCommand` is deprecated, use `CommandManager#hasCommand` instead;
 
 - [CHORE]: Bump dependencies;
 
-- [NOTE]: Support for node v18+ has been restored;
-  - The library now supports node v18+ again;
+- [NOTE]: Support for Node v18+ has been restored;
 
 ## v1.0.0-ALPHA.9
 - [NEW]: Allow the user to enable ephemeral responses when using "deferReply";
