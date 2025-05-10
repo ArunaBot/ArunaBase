@@ -6,13 +6,11 @@ class CommandStructureBase {
   private name: string;
   private description: string;
   private localizations: { [key: string]: ILocalizationBase } | null;
-  private guildID: string | null;
 
   protected isAsync?: boolean;
   protected isSlashCommand: boolean;
   protected isLegacyCommand: boolean;
   protected isLocalized: boolean;
-  protected isGlobal: boolean;
   protected allowDM: boolean;
   protected aliases: string[];
   protected parameters: ICommandParameter[];
@@ -52,14 +50,6 @@ class CommandStructureBase {
       this.parameters = options.parameters;
     } else {
       this.parameters = [];
-    }
-
-    if (options.guildID) {
-      this.isGlobal = false;
-      this.guildID = options.guildID;
-    } else {
-      this.isGlobal = true;
-      this.guildID = null;
     }
 
     var subCommandVerifier = 0;
@@ -141,10 +131,8 @@ class CommandStructureBase {
     // Check and fix the parameter types rules
     // String
     if (parameter.type === ApplicationCommandOptionType.String) {
-      if (parameter.min_length && parameter.min_length < 0) parameter.min_length = 0;
-      if (parameter.min_length && parameter.min_length > 6000) parameter.min_length = 6000;
-      if (parameter.max_length && parameter.max_length < 1) parameter.max_length = 1;
-      if (parameter.max_length && parameter.max_length > 6000) parameter.max_length = 6000;
+      if (parameter.min_length) parameter.min_length = Math.max(Math.min(0, parameter.min_length), 6000);
+      if (parameter.max_length) parameter.max_length = Math.max(Math.min(1, parameter.max_length), 6000);
     } else {
       if (parameter.min_length) delete parameter.min_length;
       if (parameter.max_length) delete parameter.max_length;
@@ -206,11 +194,6 @@ class CommandStructureBase {
     return this.localizations ?? {};
   }
 
-  public getGuildID(): string {
-    if (!this.guildID) return '0';
-    return this.guildID;
-  }
-
   public getType(): number {
     return this.type;
   }
@@ -247,10 +230,6 @@ class CommandStructureBase {
 
   public isLocalizedCommand(): boolean {
     return this.isLocalized;
-  }
-
-  public isGlobalCommand(): boolean {
-    return this.isGlobal;
   }
 
   public isNSFW(): boolean {

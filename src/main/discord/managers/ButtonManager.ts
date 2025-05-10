@@ -6,6 +6,7 @@ export class ButtonManager {
   private static instance: ButtonManager;
 
   private buttonListener!: ButtonListener;
+  private buttons: { [key: string]: ButtonStructure } = {};
 
   constructor(
     private client: DiscordClient,
@@ -26,8 +27,6 @@ export class ButtonManager {
 
     return ButtonManager.instance;
   }
-
-  private buttons: { [key: string]: ButtonStructure } = {};
 
   public registerButton(button: ButtonStructure): void {
     this.buttons[button.getID()] = button;

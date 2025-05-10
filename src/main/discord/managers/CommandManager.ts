@@ -1,4 +1,4 @@
-import { EConditionalPrefixType, EHTTP, IAsyncCommandOptions, ICommandGuildScope, ICommandManagerOptions, ICommandOptions, IEndPointStructure, StructuredCommand } from '../../interfaces';
+import { EConditionalPrefixType, EHTTP, IAsyncCommandOptions, ICommandManagerOptions, ICommandOptions, IEndPointStructure, StructuredCommand } from '../../interfaces';
 import { CommandStructureBased, CommandStructure, AsyncCommandStructure, ConditionalPrefixStructure } from '../structures';
 import { ApplicationCommandType, Collection } from 'discord.js';
 import { CommandListener } from '../listeners';
@@ -27,37 +27,11 @@ import { HTTPClient } from '../utils/';
  * // The bot can now execute the ping command in any channel by using the configured prefix or by using the slash command.
  */
 export class CommandManager {
-  /**
-   * A collection of commands that can only be used in specific Discord guilds.
-   * @type {Collection<ICommandGuildScope, CommandStructureBased>}
-   * @private
-   */
-  private guildCommands: Collection<ICommandGuildScope, CommandStructureBased> = new Collection();
-
-  /**
-   * A collection of commands that can be used in any Discord guild.
-   * @type {Collection<string[], CommandStructureBased>}
-   * @private
-   */
   private globalCommands: Collection<string[], CommandStructureBased> = new Collection();
-
-  /**
-   * An array of custom prefixes that can be used to execute commands.
-   * @type {ConditionalPrefixStructure[]}
-   * @private
-   */
   private customPrefixes: ConditionalPrefixStructure[] = [];
-
-  /**
-   * The options for this command manager.
-   * @type {ICommandManagerOptions}
-   * @private
-   */
-  private options: ICommandManagerOptions;
-
-  // private endpointBufferInstance: Generator<unknown, CommandStructureBased, unknown>;
+  private readonly commandListener: CommandListener;
   private endpointsBuffer: IEndPointStructure[];
-  private commandListener: CommandListener;
+  private options: ICommandManagerOptions;
   private processingBuffer: boolean;
   private httpClient: HTTPClient;
 
@@ -78,7 +52,6 @@ export class CommandManager {
   }
 
   private async endpointBufferRunner(): Promise<void> {
-    // get the first element from the array
     if (!this.options.client.isReady()) {
       this.options.client.getLogger().debug('CommandManager: Client is not ready. Pausing endpoint buffer.');
       this.options.client.once('ready', () => {
@@ -88,8 +61,7 @@ export class CommandManager {
       return;
     }
     const packetObject = this.endpointsBuffer[0];
-    if (!packetObject) return;
-    if (this.processingBuffer) return;
+    if (!packetObject || this.processingBuffer) return;
     this.processingBuffer = true;
     const result = await this.httpClient.makeRequest(
       packetObject.type,
@@ -102,10 +74,13 @@ export class CommandManager {
     const headers = result[2];
     const statusCode = result[1];
     const remainingTillReset = parseInt((headers['x-ratelimit-remaining'] as string));
-    var retryAfter = parseFloat((headers['x-ratelimit-reset-after'] as string)) * 1000;
+    let retryAfter = parseFloat((headers['x-ratelimit-reset-after'] as string)) * 1000;
     if (remainingTillReset === 0) {
       this.options.client.getLogger().debug(
-        `CommandManager: Discord will rate limit the bot. Registering ${!(packetObject.command instanceof Array) ? packetObject.command!.name : packetObject.command!.map((i) => i.name).join(', ')}. Retrying after ${retryAfter}ms.`,
+        `CommandManager: Discord will rate limit the bot. Registering ${
+          !(packetObject.command instanceof Array) ?
+            packetObject.command!.name : packetObject.command!.map((i) => i.name).join(', ')
+        }. Retrying after ${retryAfter}ms.`,
       );
       setTimeout(() => {
         this.processingBuffer = false;
@@ -117,7 +92,10 @@ export class CommandManager {
     if (statusCode === 429) {
       retryAfter = (data.retry_after * 1000);
       this.options.client.getLogger().debug(
-        `CommandManager: Discord rate limited the bot. Registering ${!(packetObject.command instanceof Array) ? packetObject.command!.name : packetObject.command!.map((i) => i.name).join(', ')}. Retrying after ${retryAfter}ms.`,
+        `CommandManager: Discord rate limited the bot. Registering ${
+          !(packetObject.command instanceof Array) ?
+              packetObject.command!.name : packetObject.command!.map((i) => i.name).join(', ')
+        }. Retrying after ${retryAfter}ms.`,
       );
       if (isNaN(retryAfter)) throw new Error('CommandManager: Discord rate limited the bot and didn\'t provide a retry-after value. You win!\n' + data);
       setTimeout(() => {
@@ -148,6 +126,8 @@ export class CommandManager {
   /**
    * Gets the collection of global commands.
    * @returns {Collection<string[], CommandStructureBased>}
+   * @deprecated Use `getCommands` instead.
+   * @see {@link CommandManager#getCommands}
    */
   public getGlobalCommands(): Collection<string[], CommandStructureBased> {
     return this.globalCommands;
@@ -157,34 +137,33 @@ export class CommandManager {
    * Gets a global command by its name.
    * @param {string} name - The name of the command.
    * @returns {(CommandStructureBased | null)}
+   * @deprecated Use `getCommand` instead.
+   * @see {@link CommandManager#getCommand}
    */
   public getGlobalCommand(name: string): CommandStructureBased | null {
-    return this.globalCommands.find((value, key) => key.includes(name)) ?? null;
+    return this.getCommand(name);
   }
 
   /**
    * Checks if a global command exists by its name.
    * @param {string | string[]} name - The name of the command.
    * @returns {boolean}
+   * @deprecated Use `hasCommand` instead.
+   * @see {@link CommandManager#hasCommand}
    */
   public hasGlobalCommand(name: string | string[]): boolean {
-    if (name instanceof Array) {
-      return this.globalCommands.has(name);
-    } else {
-      return !!this.globalCommands.find((value, key) => key.includes(name));
-    }
+    return this.hasCommand(name);
   }
 
   /**
    * Registers a new command.
    * @param {CommandStructureBased} command - The command to register.
-   * @returns {Collection<string | ICommandGuildScope, CommandStructureBased>}
+   * @returns {Promise<CommandStructureBased | CommandStructureBased[]>}
    * @throws {Error} If a command with the same name already exists in the scope or if discord returns a status code different of 200 or 201.
    */
   public async registerCommand(command: CommandStructureBased | CommandStructureBased[]): Promise<CommandStructureBased | CommandStructureBased[]> {
     if (!command) throw new Error('CommandManager: Command is not defined.');
     if (command instanceof Array) return this.bulkRegisterCommand(command);
-    if (!command.isGlobalCommand()) return this.registerGuildCommand(command);
     if (command.isSlash()) {
       // Slash Command
       const structuredCommand: StructuredCommand = {
@@ -236,22 +215,16 @@ export class CommandManager {
     if (commands.length === 0) throw new Error('CommandManager: Command array is empty.');
     if (commands.length === 1) return [(await this.registerCommand(commands[0]) as CommandStructureBased)];
 
-    this.options.client.getLogger().warn('CommandManager: A command array was passed, this will override all commands (slash, user and message) for this bot. (This will delete all commands that isn\'t in array)');
+    this.options.client.getLogger().warn(
+      `CommandManager: A command array was passed, this will override all commands(slash, user and message) for this bot. (This will delete all commands that isn't in array)`,
+    );
 
-    const globalCommands = commands.filter((command) => command.isGlobalCommand());
-    const guildCommands = commands.filter((command) => !command.isGlobalCommand());
-
-    const commandsResult: CommandStructureBased[] = [];
-
-    if (guildCommands.length > 0) commandsResult.push(...(await this.bulkRegisterGuildCommand(guildCommands)));
-    if (globalCommands.length <= 0) return commandsResult;
-
-    const slashCommands = globalCommands.filter((command) => command.isSlash());
+    const slashCommands = commands.filter((command) => command.isSlash());
 
     const structuredCommands: StructuredCommand[] = [];
     const slashStructuredCommands: StructuredCommand[] = [];
 
-    for (const command of globalCommands) {
+    for (const command of commands) {
       const structuredCommand: StructuredCommand = {
         name: command.getName(),
         type: command.getType(),
@@ -291,60 +264,14 @@ export class CommandManager {
       },
     );
 
-    commandsResult.push(...globalCommands);
-    return commandsResult;
-  }
-
-  /**
-   * Registers a new guild-specific command.
-   * @param command The command to register.
-   * @returns The registered command.
-   * 
-   * @todo This method is not implemented yet.
-   */
-  public async registerGuildCommand(command: CommandStructureBased | CommandStructureBased[]): Promise<CommandStructureBased | CommandStructureBased[]> {
-    if (!command) throw new Error('CommandManager: Command is not defined.');
-    if (command instanceof Array) return this.bulkRegisterGuildCommand(command);
-    if (command.isGlobalCommand()) throw new Error('CommandManager: This is a global command. Use registerCommand() instead.');
-    // if (this.guildCommands.has({ guildID: command.getGuildID(), commandAliases: command.getAliases() })) throw new Error(`Command ${command.getName()} already exists in guild scope.`);
-    // if (command.isSlash()) {
-    //   // Slash Command
-    //   const structuredCommand: StructuredCommand = {
-    //     name: command.getName(),
-    //     type: command.getType(),
-    //     description: command.getDescription(),
-    //     dm_permission: command.isDMAllowed(),
-    //   };
-
-    //   if (command.isLocalizedCommand()) {
-    //     const localization = command.getLocalizations();
-    //     if (localization.name_localizations) structuredCommand['name_localizations'] = localization.name_localizations;
-    //     if (localization.name_localizations) structuredCommand['description_localizations'] = localization.description_localizations;
-    //   }
-
-    //   if (command.getParameters().length > 0) structuredCommand['options'] = command.getParameters();
-    //   if (command.getGuildID())
-    throw new Error('Not implemented 🦊');
-  }
-
-  /**
-   * Registers multiple guild-specific commands.
-   * @note This method will override all commands (slash, user and message) for this specific guild.
-   * @param commands The commands to register.
-   * @returns The registered commands.
-   * 
-   * @todo This method is not implemented yet.
-  */
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  public async bulkRegisterGuildCommand(commands: CommandStructureBased[]): Promise<CommandStructureBased[]> {
-    throw new Error('Not implemented');
+    return commands;
   }
 
   /**
    * Registers a custom prefix that can be used to execute commands.
    * @param prefix The custom prefix.
    * @param conditions The conditions that must be met for the prefix to be used.
-   * @throws {Error} If some custom prefix with the one or more conditions already exists.
+   * @throws {Error} If some custom prefix with one or more conditions already exists.
    */
   public registerCustomPrefix(prefix: string, condition: { type: EConditionalPrefixType, value: string }): boolean {
     if (!prefix) throw new Error('CommandManager: Prefix is not defined.');
@@ -352,13 +279,10 @@ export class CommandManager {
 
     if (this.customPrefixes.some((p) => p.getConditions().some((c) => c === condition))) throw new Error('CommandManager: Custom prefix with the same condition already exists.');
 
-    const c = this.customPrefixes.find((customPrefix) => prefix === customPrefix.getPrefix());
-    if (c) {
-      c.addCondition(condition.type, condition.value);
-      return true;
-    }
+    const customPrefix = this.customPrefixes.find((customPrefix) => prefix === customPrefix.getPrefix());
+    if (customPrefix) customPrefix.addCondition(condition.type, condition.value);
+    else this.customPrefixes.push(new ConditionalPrefixStructure(prefix, [condition]));
 
-    this.customPrefixes.push(new ConditionalPrefixStructure(prefix, [condition]));
     return true;
   }
 
@@ -368,7 +292,7 @@ export class CommandManager {
    * @returns Whether the custom prefix was unregistered successfully.
    */
   public unregisterCustomPrefix(condition: { type: EConditionalPrefixType, value: string }): boolean {
-    if (!condition) throw new Error('CommandManager: Condition is not defined.');
+    if (!condition) throw new Error('CommandManager: Condition isn\'t defined.');
     
     const customPrefix = this.customPrefixes.find((p) => p.getConditions().some((c) => c.type === condition.type && c.value === condition.value));
     if (!customPrefix) return false;
@@ -385,31 +309,20 @@ export class CommandManager {
    */
   public async unregisterCommand(command: CommandStructureBased): Promise<boolean> {
     if (!command) throw new Error('CommandManager: Command is not defined.');
-    if (!command.isGlobalCommand()) return this.unregisterGuildCommand(command);
-    if (command.isGlobalCommand() && !this.hasGlobalCommand(command.getAliases())) throw new Error(`Command ${command.getName()} does not exists in global scope.`);
-    if (!command.isGlobalCommand() && !this.guildCommands.has({ guildID: command.getGuildID(), commandAliases: command.getAliases() })) throw new Error(`Command ${command.getName()} does not exists in guild scope.`);
+    if (!this.hasCommand(command.getAliases())) throw new Error(`Command ${command.getName()} doesn't exists.`);
     if (command.isSlash()) {
       this.makeEndpointRequest(
         EHTTP.DELETE,
         [`commands/${command.getSlashId()}`],
         (requestResult) => {
           if (!requestResult || !(requestResult instanceof Array)) throw new Error('CommandManager: Request result is not defined. You win!');
-          const commandUnregisterSuccessfully = (requestResult[1] === 204);
-          if (!commandUnregisterSuccessfully) throw new Error(`Command ${command.getName()} could not be unregistered.\nResponse: ${requestResult[0]}`);
+          // 204 status code: command unregistered successfully
+          if (requestResult[1] !== 204) throw new Error(`Command ${command.getName()} couldn't be unregistered.\nResponse: ${requestResult[0]}`);
         },
       );
     }
 
-    if (command.isGlobalCommand()) {
-      return this.globalCommands.delete(command.getAliases());
-    } else {
-      return this.guildCommands.delete({ guildID: command.getGuildID(), commandAliases: command.getAliases() });
-    }
-  }
-
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  public async unregisterGuildCommand(command: CommandStructureBased): Promise<boolean> {
-    throw new Error('Not implemented');
+    return this.globalCommands.delete(command.getAliases());
   }
 
   public getCustomPrefixes(): ConditionalPrefixStructure[] {
@@ -417,41 +330,30 @@ export class CommandManager {
   }
 
   /**
-   * Gets the collection of guild-specific commands.
-   * @returns {Collection<ICommandGuildScope, CommandStructureBased>}
+   * Gets all commands.
+   * @returns {CommandStructureBased[]}
    */
-  public getGuildCommands(): Collection<ICommandGuildScope, CommandStructureBased> {
-    return this.guildCommands;
+  public getCommands(): CommandStructureBased[] {
+    return this.globalCommands.map((command) => command);
   }
 
   /**
-   * Gets a guild-specific command.
-   * @param {ICommandGuildScope} parameters - The parameters of the command to get.
-   * @returns {(CommandStructureBased | null)}
-   */
-  public getGuildCommand(parameters: ICommandGuildScope): CommandStructureBased | null {
-    return this.guildCommands.find((value, key) => {
-      return (key.guildID === parameters.guildID) && (key.commandAliases.some((aliase) => { return parameters.commandAliases.includes(aliase); }));
-    }) || null;
-  }
-
-  /**
-   * Gets a command by its name, prioritizing guild-specific commands.
+   * Gets a command by its name
    * @param {string} name - The name of the command.
-   * @param {string} [guildID] - The ID of the guild to get the command from.
    * @returns {(CommandStructureBased | null)}
    */
-  public getCommand(name: string, guildID?: string): CommandStructureBased | null {
-    var command;
-    if (guildID) {
-      command = this.getGuildCommand({ guildID, commandAliases: [name] });
-    }
+  public getCommand(name: string): CommandStructureBased | null {
+    return this.globalCommands.find((_value, key) => key.includes(name)) ?? null;
+  }
 
-    if (!command) {
-      command = this.getGlobalCommand(name);
-    }
-
-    return command;
+  /**
+   * Checks if a command exists by its name
+   * @param {string | string[]} name - The name of the command.
+   * @returns {boolean}
+   */
+  public hasCommand(name: string | string[]): boolean {
+    if (name instanceof Array) return this.globalCommands.has(name);
+    return !!this.globalCommands.find((_value, key) => key.includes(name));
   }
 
   /**
@@ -461,11 +363,11 @@ export class CommandManager {
    * @param options - The options for the command.
    * @returns The generated `CommandStructure` instance.
    */
-  public generateCommand(name: string, options: ICommandOptions): CommandStructure {
-    if (!options.isLegacyCommand) options.isLegacyCommand = true;
-    if (!options.isSlashCommand) options.isSlashCommand = true;
+  public generateCommand(name: string, options: ICommandOptions | IAsyncCommandOptions, asyncCommand: boolean = false): CommandStructure | AsyncCommandStructure {
+    if (options.isLegacyCommand == null) options.isLegacyCommand = true;
+    if (options.isSlashCommand == null) options.isSlashCommand = true;
+    if (options.allowDM == null) options.allowDM = true;
     if (!options.type) options.type = ApplicationCommandType.ChatInput;
-    if (!options.allowDM) options.allowDM = true;
     if (options.type === ApplicationCommandType.ChatInput) {
       if (!options.description) options.description = name;
       name = name.toLowerCase();
@@ -473,8 +375,7 @@ export class CommandManager {
       options.description = '';
       delete options.description_localizations;
     }
-    const command = new CommandStructure(name, options);
-    return command;
+    return new (asyncCommand ? AsyncCommandStructure : CommandStructure)(name, options);
   }
 
   /**
@@ -483,14 +384,11 @@ export class CommandManager {
    * @param name - The name of the command.
    * @param options - The options for the command.
    * @returns The generated `AsyncCommandStructure` instance.
+   * @deprecated Use `generateCommand` with `asyncCommand` set to `true` instead.
+   * @see {@link CommandManager#generateCommand}
    */
   public generateAsyncCommand(name: string, options: IAsyncCommandOptions): AsyncCommandStructure {
-    if (!options.isLegacyCommand) options.isLegacyCommand = true;
-    if (!options.isSlashCommand) options.isSlashCommand = true;
-    if (!options.type) options.type = ApplicationCommandType.ChatInput;
-    if (!options.allowDM) options.allowDM = true;
-    const command = new AsyncCommandStructure(name, options);
-    return command;
+    return this.generateCommand(name, options, true) as AsyncCommandStructure;
   }
 
   public getPrefix(): string | null {

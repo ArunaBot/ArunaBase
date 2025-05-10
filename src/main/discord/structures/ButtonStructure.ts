@@ -25,7 +25,7 @@ export class ButtonStructure {
       if (style === ButtonStyle.Link) throw new Error('ButtonStyle.Link is not allowed in this constructor. Use ButtonURLStructure instead');
       this.style = style;
     }
-    if (disabled) this.disabled = disabled;
+    this.disabled = disabled ?? false;
 
     this.discordButton =
     new ButtonBuilder()
