@@ -30,7 +30,7 @@ jobs:
 
       - name: Get current npm version
         id: npm_version
-        run: echo version=$(npm view @twitchapis/twitch.js version) >> $GITHUB_OUTPUT
+        run: echo version=$(npm view arunabase version) >> $GITHUB_OUTPUT
 
       - name: Compare versions and skip if same
         id: compare_versions
