@@ -14,7 +14,7 @@ export class DiscordClient extends DJSClient {
   private logger: Logger;
 
   constructor(options: IDiscordConfiguration, logger?: Logger) {
-    super(options as ClientOptions);
+    super({ ...options as ClientOptions, enforceNonce: true });
 
     this.prefix = options.prefix ?? '!';
     this.allowSlashCommands = options.allowSlashCommands ?? true;

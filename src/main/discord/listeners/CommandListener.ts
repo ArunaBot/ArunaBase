@@ -110,7 +110,7 @@ export class CommandListener {
       args,
       message,
     };
-    await this.executeCommand(commandName, context, (message.channel.type === ChannelType.DM)).catch((error) => {
+    this.executeCommand(commandName, context, (message.channel.type === ChannelType.DM)).catch((error) => {
       this.client.getLogger().error(`An error occurred while execute command ${commandName}.\nError:`, error);
     });
   }
@@ -151,7 +151,7 @@ export class CommandListener {
       interaction: ctx,
     };
 
-    await this.executeCommand(ctx.commandName, context).catch((error) => {
+    this.executeCommand(ctx.commandName, context).catch((error) => {
       const errorMessage = `An error occurred while execute command ${ctx.commandName}.`;
       if (!ctx.replied && !ctx.deferred) {
         ctx.reply({ content: errorMessage, flags: MessageFlags.Ephemeral }).catch();
