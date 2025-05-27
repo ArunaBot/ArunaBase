@@ -131,8 +131,8 @@ class CommandStructureBase {
     // Check and fix the parameter types rules
     // String
     if (parameter.type === ApplicationCommandOptionType.String) {
-      if (parameter.min_length) parameter.min_length = Math.max(Math.min(0, parameter.min_length), 6000);
-      if (parameter.max_length) parameter.max_length = Math.max(Math.min(1, parameter.max_length), 6000);
+      if (parameter.min_length) parameter.min_length = Math.max(0, Math.min(parameter.min_length, 4000));
+      if (parameter.max_length) parameter.max_length = Math.max(1, Math.min(parameter.max_length, 4000));
     } else {
       if (parameter.min_length) delete parameter.min_length;
       if (parameter.max_length) delete parameter.max_length;
