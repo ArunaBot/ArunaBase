@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.0.0-ALPHA.12
+
+- [FIX]: Fix argument type in command context;
+  - Now you can receive the `Role` type in the command context;
+
 ## v1.0.0-ALPHA.11
 
 - [FIX]: Fixed a rare crash related to slash commands;

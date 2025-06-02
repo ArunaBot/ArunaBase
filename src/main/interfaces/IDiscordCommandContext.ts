@@ -8,6 +8,7 @@ import {
   GuildTextBasedChannel,
   InteractionResponse,
   Message,
+  Role,
   TextBasedChannel,
   User,
 } from 'discord.js';
@@ -28,7 +29,7 @@ export interface IDiscordCommandContext {
   deleteReply: () => Promise<void | Message<boolean>>;
   deferReply: (ephemeral?: boolean) => Promise<void | InteractionResponse<boolean>>;
   messageReplyContent?: Message<boolean> | null,
-  args: (string | number | boolean | User | undefined)[];
+  args: (string | number | boolean | User | Role | undefined)[];
   author: User;
   member?: GuildMember | null;
   guild?: Guild | null;
