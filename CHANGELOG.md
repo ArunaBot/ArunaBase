@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.0.0-ALPHA.13
+
+- [REVERT]: Reverted ALPHA.12 changes;
+  - Discord.js doesn't provide the `Role` type in the command context, only its ID;
+
 ## v1.0.0-ALPHA.12
 
 - [FIX]: Fix argument type in command context;
