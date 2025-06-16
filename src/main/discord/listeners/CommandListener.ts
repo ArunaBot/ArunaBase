@@ -11,6 +11,7 @@ import {
   MessageFlags,
   EmbedBuilder,
   AttachmentBuilder,
+  ChatInputCommandInteraction,
 } from 'discord.js';
 import { AsyncCommandStructure, CommandStructure, MessageStructure } from '../structures';
 import { IDiscordCommandContext } from '../../interfaces';
@@ -124,7 +125,7 @@ export class CommandListener {
       channel: ctx.channel,
       member: ctx.member as GuildMember,
       author: ctx.user,
-      args: ctx.options.data.map((arg) => arg.value),
+      args: (ctx as ChatInputCommandInteraction).options.data.map((arg) => arg.value),
       reply: async (...options: [MessageStructure] | MsgParams[]): Promise<Message<BooleanCache<any>> | InteractionResponse<boolean>> => {
         if (options.length === 1 && options[0] instanceof MessageStructure) return await ctx.reply(options[0]);
         return await ctx.reply(this.replyParser(...(options as MsgParams[])));
