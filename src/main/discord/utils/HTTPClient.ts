@@ -1,6 +1,6 @@
+import { EHTTP } from '../../common/interfaces';
 import { HTTPClientBase } from '../../http';
 import { IncomingHttpHeaders } from 'http';
-import { EHTTP } from '../../interfaces';
 
 export class HTTPClient extends HTTPClientBase {
   public async makeRequest(method: EHTTP, version: string, path: string, token: string, body: any = null): Promise<[string | null, number, IncomingHttpHeaders]> {

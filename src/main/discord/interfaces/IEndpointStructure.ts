@@ -1,4 +1,5 @@
-import { EHTTP, StructuredCommand } from '.';
+import { EHTTP } from '../../common/interfaces';
+import { StructuredCommand } from '.';
 
 export interface IEndPointStructure {
   type: EHTTP,

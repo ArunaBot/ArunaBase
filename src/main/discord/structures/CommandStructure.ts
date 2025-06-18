@@ -1,34 +1,33 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { IAsyncCommandOptions, ICommandOptions, ICommandParameter, ILocalizationBase, IDiscordCommandContext } from '../../interfaces';
+import {
+  IAsyncCommandOptions,
+  ICommandOptions,
+  ICommandParameter,
+  ILocalizationBase,
+  ICommandContext,
+} from '../interfaces';
 import { ApplicationCommandOptionType, ApplicationCommandType } from 'discord.js';
+import { CommandStructureBase } from '../../common';
 
-class CommandStructureBase {
-  private name: string;
-  private description: string;
-  private localizations: { [key: string]: ILocalizationBase } | null;
+abstract class DiscordCommandStructureBase extends CommandStructureBase {
+  protected localizations: { [key: string]: ILocalizationBase } | null;
 
-  protected isAsync?: boolean;
+  protected parameters: ICommandParameter[];
   protected isSlashCommand: boolean;
   protected isLegacyCommand: boolean;
   protected isLocalized: boolean;
+  protected slashId?: string;
   protected allowDM: boolean;
-  protected aliases: string[];
-  protected parameters: ICommandParameter[];
   protected type: number;
   protected nsfw: boolean;
-  protected slashId?: string;
 
   constructor(name: string, options: ICommandOptions) {
-    this.name = this.checkAndFixName(name);
-    this.description = options.description ?? '';
+    super(name, options);
     this.isSlashCommand = options.isSlashCommand ?? true;
     this.isLegacyCommand = options.isLegacyCommand ?? true;
     this.allowDM = options.allowDM ?? true;
-    this.aliases = options.aliases ?? [];
     this.type = options.type ?? ApplicationCommandType.ChatInput; // Slash Commands only
     this.nsfw = options.nsfw ?? false;
-
-    this.aliases.unshift(this.name);
 
     if (options.name_localizations || options.description_localizations) {
       this.isLocalized = true;
@@ -38,7 +37,7 @@ class CommandStructureBase {
       };
       if (options.name_localizations) {
         Object.values(options.name_localizations).forEach((aliase) => {
-          if (aliase !== this.name) this.aliases.push(aliase);
+          if (aliase !== this.getName()) this.aliases.push(aliase as string);
         });
       }
     } else {
@@ -59,18 +58,6 @@ class CommandStructureBase {
       // check and fix invalid parameters
       array[index] = this.checkAndFixInvalidParameters(parameter, setSubCommandVerifier, getSubCommandVerifier);
     });
-  }
-
-  private checkAndFixName(name: string): string {
-    if (name.length > 32) throw new Error(`Command name: ${name} is too long (max 32, current: ${name.length})`);
-    if (name.length < 1) throw new Error(`Command name: ${name} is too short (min 1, current: ${name.length})`);
-    if (name !== name.toLowerCase()) {
-      console.warn(`WARNING: Command name: ${name} is not lowercase, converting to lowercase`);
-    }
-    if (name.includes(' ')) {
-      console.warn(`WARNING: Command name: ${name} has spaces, replacing spaces with _`);
-    }
-    return name.toLowerCase().replace(/ /g, '_');
   }
 
   private checkAndFixInvalidParameters(
@@ -178,18 +165,6 @@ class CommandStructureBase {
     return parameter;
   }
 
-  public getName(): string {
-    return this.name;
-  }
-
-  public getDescription(): string {
-    return this.description;
-  }
-
-  public getAliases(): string[] {
-    return this.aliases;
-  }
-
   public getLocalizations(): { [key: string]: ILocalizationBase } {
     return this.localizations ?? {};
   }
@@ -236,12 +211,12 @@ class CommandStructureBase {
     return this.nsfw;
   }
 
-  public checkPermission(context: IDiscordCommandContext): boolean {
+  public override checkPermission(context: ICommandContext): boolean {
     return true;
   }
 }
 
-export class CommandStructure extends CommandStructureBase {
+export class CommandStructure extends DiscordCommandStructureBase {
   constructor(name: string, options: ICommandOptions) {
     super(name, options);
 
@@ -250,11 +225,11 @@ export class CommandStructure extends CommandStructureBase {
     this.isAsync = false;
   }
 
-  public run(context: IDiscordCommandContext): void {
+  public override run(context: ICommandContext): void {
     return this.execute(context);
   }
 
-  protected execute(context: IDiscordCommandContext): void {
+  protected override execute(context: ICommandContext): void {
     throw new Error('Method not implemented.');
   }
 }
@@ -268,11 +243,11 @@ export class AsyncCommandStructure extends CommandStructure {
     this.isAsync = true;
   }
 
-  public async run(context: IDiscordCommandContext): Promise<void> {
+  public override async run(context: ICommandContext): Promise<void> {
     return await this.execute(context);
   }
 
-  protected override async execute(context: IDiscordCommandContext): Promise<void> {
+  protected override async execute(context: ICommandContext): Promise<void> {
     throw new Error('Method not implemented.');
   }
 }

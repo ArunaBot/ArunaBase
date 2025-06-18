@@ -14,9 +14,9 @@ import {
   ChatInputCommandInteraction,
 } from 'discord.js';
 import { AsyncCommandStructure, CommandStructure, MessageStructure } from '../structures';
-import { IDiscordCommandContext } from '../../interfaces';
-import { DiscordClient } from '../Client';
 import { ButtonManager, CommandManager } from '../managers';
+import { ICommandContext } from '../interfaces';
+import { DiscordClient } from '../Client';
 
 type MsgParams = string | EmbedBuilder | AttachmentBuilder;
 
@@ -44,7 +44,7 @@ export class CommandListener {
     const commandName = args.shift()?.toLowerCase();
     if (!commandName) return;
 
-    const context: IDiscordCommandContext = {
+    const context: ICommandContext = {
       client: this.client,
       guild: message.guild,
       channel: message.channel,
@@ -119,7 +119,7 @@ export class CommandListener {
   private async onInteractionCreate(ctx: Interaction): Promise<void> {
     if (!ctx.isCommand()) return;
 
-    const context: IDiscordCommandContext = {
+    const context: ICommandContext = {
       client: this.client,
       guild: ctx.guild,
       channel: ctx.channel,
@@ -185,7 +185,7 @@ export class CommandListener {
     return result;
   }
 
-  private async executeCommand(commandName: string, context: IDiscordCommandContext, isDM = false): Promise<void> {
+  private async executeCommand(commandName: string, context: ICommandContext, isDM = false): Promise<void> {
     context = { ...context, ...this.additionalContext };
     const command = this.manager.getCommand(commandName);
     if (!command) return Promise.resolve();

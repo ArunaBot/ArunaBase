@@ -1,11 +1,12 @@
 import './utils/Patches';
 import { ClientOptions, Client as DJSClient } from 'discord.js';
 import { ButtonManager, CommandManager } from './managers';
-import { IDiscordConfiguration } from '../interfaces';
 import { Logger } from '@promisepending/logger.js';
+import { IConfiguration } from './interfaces';
+import { IClientBase } from '../common';
 
-export class DiscordClient extends DJSClient {
-  private configuration: IDiscordConfiguration;
+export class DiscordClient extends DJSClient implements IClientBase {
+  private configuration: IConfiguration;
   private commandManager: CommandManager;
   private buttonManager: ButtonManager;
   private allowLegacyCommands: boolean;
@@ -13,7 +14,7 @@ export class DiscordClient extends DJSClient {
   private prefix: string;
   private logger: Logger;
 
-  constructor(options: IDiscordConfiguration, logger?: Logger) {
+  constructor(options: IConfiguration, logger?: Logger) {
     super({ ...options as ClientOptions, enforceNonce: true });
 
     this.prefix = options.prefix ?? '!';
@@ -39,7 +40,7 @@ export class DiscordClient extends DJSClient {
     this.buttonManager = new ButtonManager(this);
   }
 
-  public getConfiguration(): IDiscordConfiguration {
+  public getConfiguration(): IConfiguration {
     return this.configuration;
   }
 

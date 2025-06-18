@@ -1,6 +1,14 @@
-import { EConditionalPrefixType, EHTTP, IAsyncCommandOptions, ICommandManagerOptions, ICommandOptions, IEndPointStructure, StructuredCommand } from '../../interfaces';
+import {
+  EConditionalPrefixType, 
+  ICommandManagerOptions,
+  IAsyncCommandOptions,
+  IEndPointStructure,
+  StructuredCommand,
+  ICommandOptions,
+} from '../interfaces';
 import { CommandStructureBased, CommandStructure, AsyncCommandStructure, ConditionalPrefixStructure } from '../structures';
-import { ApplicationCommandType, Collection } from 'discord.js';
+import { CommandManagerBase, EHTTP } from '../../common/';
+import { ApplicationCommandType } from 'discord.js';
 import { CommandListener } from '../listeners';
 import { HTTPClient } from '../utils/';
 
@@ -26,8 +34,10 @@ import { HTTPClient } from '../utils/';
  *
  * // The bot can now execute the ping command in any channel by using the configured prefix or by using the slash command.
  */
-export class CommandManager {
-  private globalCommands: Collection<string[], CommandStructureBased> = new Collection();
+export class CommandManager extends CommandManagerBase {
+  protected override commands: Map<string[], CommandStructureBased> = new Map();
+  protected static override instance: CommandManager;
+
   private customPrefixes: ConditionalPrefixStructure[] = [];
   private readonly commandListener: CommandListener;
   private endpointsBuffer: IEndPointStructure[];
@@ -40,6 +50,7 @@ export class CommandManager {
    * @param {ICommandManagerOptions} options - The options for this command manager.
    */
   constructor(options: ICommandManagerOptions) {
+    super();
     this.options = options;
     this.options.allowLegacyCommands = this.options.allowLegacyCommands ?? true;
     this.options.allowSlashCommands = this.options.allowSlashCommands ?? true;
@@ -124,44 +135,12 @@ export class CommandManager {
   }
 
   /**
-   * Gets the collection of global commands.
-   * @returns {Collection<string[], CommandStructureBased>}
-   * @deprecated Use `getCommands` instead.
-   * @see {@link CommandManager#getCommands}
-   */
-  public getGlobalCommands(): Collection<string[], CommandStructureBased> {
-    return this.globalCommands;
-  }
-
-  /**
-   * Gets a global command by its name.
-   * @param {string} name - The name of the command.
-   * @returns {(CommandStructureBased | null)}
-   * @deprecated Use `getCommand` instead.
-   * @see {@link CommandManager#getCommand}
-   */
-  public getGlobalCommand(name: string): CommandStructureBased | null {
-    return this.getCommand(name);
-  }
-
-  /**
-   * Checks if a global command exists by its name.
-   * @param {string | string[]} name - The name of the command.
-   * @returns {boolean}
-   * @deprecated Use `hasCommand` instead.
-   * @see {@link CommandManager#hasCommand}
-   */
-  public hasGlobalCommand(name: string | string[]): boolean {
-    return this.hasCommand(name);
-  }
-
-  /**
    * Registers a new command.
    * @param {CommandStructureBased} command - The command to register.
    * @returns {Promise<CommandStructureBased | CommandStructureBased[]>}
    * @throws {Error} If a command with the same name already exists in the scope or if discord returns a status code different of 200 or 201.
    */
-  public async registerCommand(command: CommandStructureBased | CommandStructureBased[]): Promise<CommandStructureBased | CommandStructureBased[]> {
+  public override async registerCommand(command: CommandStructureBased | CommandStructureBased[]): Promise<CommandStructureBased | CommandStructureBased[]> {
     if (!command) throw new Error('CommandManager: Command is not defined.');
     if (command instanceof Array) return this.bulkRegisterCommand(command);
     if (command.isSlash()) {
@@ -199,7 +178,7 @@ export class CommandManager {
       );
     }
 
-    this.globalCommands.set(command.getAliases(), command);
+    this.commands.set(command.getAliases(), command);
 
     return command;
   }
@@ -241,7 +220,7 @@ export class CommandManager {
       if (command.getParameters().length > 0) structuredCommand['options'] = command.getParameters();
       if (command.isSlash()) slashStructuredCommands.push(structuredCommand);
 
-      this.globalCommands.set(command.getAliases(), command);
+      this.commands.set(command.getAliases(), command);
       structuredCommands.push(structuredCommand);
     }
 
@@ -307,7 +286,7 @@ export class CommandManager {
    * @param command The command to unregister.
    * @returns Whether the command was unregistered successfully.
    */
-  public async unregisterCommand(command: CommandStructureBased): Promise<boolean> {
+  public override async unregisterCommand(command: CommandStructureBased): Promise<boolean> {
     if (!command) throw new Error('CommandManager: Command is not defined.');
     if (!this.hasCommand(command.getAliases())) throw new Error(`Command ${command.getName()} doesn't exists.`);
     if (command.isSlash()) {
@@ -322,7 +301,7 @@ export class CommandManager {
       );
     }
 
-    return this.globalCommands.delete(command.getAliases());
+    return this.commands.delete(command.getAliases());
   }
 
   public getCustomPrefixes(): ConditionalPrefixStructure[] {
@@ -333,8 +312,8 @@ export class CommandManager {
    * Gets all commands.
    * @returns {CommandStructureBased[]}
    */
-  public getCommands(): CommandStructureBased[] {
-    return this.globalCommands.map((command) => command);
+  public override getCommands(): CommandStructureBased[] {
+    return this.commands.values().toArray();
   }
 
   /**
@@ -343,7 +322,7 @@ export class CommandManager {
    * @returns {(CommandStructureBased | null)}
    */
   public getCommand(name: string): CommandStructureBased | null {
-    return this.globalCommands.find((_value, key) => key.includes(name)) ?? null;
+    return this.commands.entries().find((value) => { value[0].includes(name.toLowerCase()); })?.[1] || null;
   }
 
   /**
@@ -352,8 +331,8 @@ export class CommandManager {
    * @returns {boolean}
    */
   public hasCommand(name: string | string[]): boolean {
-    if (name instanceof Array) return this.globalCommands.has(name);
-    return !!this.globalCommands.find((_value, key) => key.includes(name));
+    if (name instanceof Array) return this.commands.has(name);
+    return !!this.commands.keys().find((aliases) => aliases.includes(name.toLowerCase()));
   }
 
   /**
@@ -389,6 +368,13 @@ export class CommandManager {
    */
   public generateAsyncCommand(name: string, options: IAsyncCommandOptions): AsyncCommandStructure {
     return this.generateCommand(name, options, true) as AsyncCommandStructure;
+  }
+
+  public override getInstance(): CommandManager {
+    if (!CommandManager.instance) {
+      CommandManager.instance = new CommandManager(this.options);
+    }
+    return CommandManager.instance;
   }
 
   public getPrefix(): string | null {
