@@ -1,16 +1,17 @@
-import { ITwitchConfiguration } from '../interfaces';
+import { IClientBase } from '../common';
+import { IConfiguration } from './interfaces';
 import { Client } from '@twitchapis/twitch.js';
 
-export class TwitchClient extends Client {
-  private configuration: ITwitchConfiguration;
+export class TwitchClient extends Client implements IClientBase {
+  private configuration: IConfiguration;
 
-  constructor(options: ITwitchConfiguration) {
+  constructor(options: IConfiguration) {
     super(options);
 
     this.configuration = options;
   }
 
-  public getConfiguration(): ITwitchConfiguration {
+  public getConfiguration(): IConfiguration {
     return this.configuration;
   }
 

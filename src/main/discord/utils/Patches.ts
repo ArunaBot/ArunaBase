@@ -66,9 +66,11 @@ Message.prototype.edit = async function (options: string | MessagePayload | Mess
   return this._edit(options);
 };
 
+// eslint-disable-next-line @typescript-eslint/no-deprecated
 CommandInteraction.prototype._reply = CommandInteraction.prototype.reply;
 
 // @ts-expect-error - This override the original reply method, which is preserved in _reply
+// eslint-disable-next-line @typescript-eslint/no-deprecated
 CommandInteraction.prototype.reply =
   async function (options: string | MessagePayload | InteractionReplyOptions | MessageStructure): Promise<Message<BooleanCache<any>>> {
     if (options instanceof MessageStructure) {

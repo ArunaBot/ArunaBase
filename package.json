@@ -1,6 +1,6 @@
 {
   "name": "arunabase",
-  "version": "1.0.0-ALPHA.13",
+  "version": "1.0.0-ALPHA.14",
   "description": "An API made to help developers what works with discord and twitch.",
   "main": "build/index.js",
   "types": "build/index.d.ts",
@@ -36,7 +36,7 @@
   "dependencies": {
     "@promisepending/logger.js": "^1.1.1",
     "@twitchapis/twitch.js": "^2.0.0-beta.7",
-    "arunacore-api": "^1.0.0-BETA.0",
+    "arunacore-api": "^1.0.0-BETA.3",
     "discord.js": "^14.20.0",
     "path-to-regexp": "^8.2.0"
   },

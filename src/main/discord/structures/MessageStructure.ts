@@ -1,6 +1,6 @@
 import { ActionRowBuilder, Attachment, BaseMessageOptions, ButtonBuilder } from 'discord.js';
-import { RichEmbed } from '../utils';
 import { ButtonStructure } from './ButtonStructure';
+import { RichEmbed } from '../utils';
 
 export class MessageStructure {
   private content: string | null = null;

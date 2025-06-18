@@ -1,6 +1,6 @@
 import { Events, Interaction } from 'discord.js';
-import { DiscordClient } from '../Client';
 import { ButtonManager } from '../managers';
+import { DiscordClient } from '../Client';
 
 export class ButtonListener {
   constructor(
