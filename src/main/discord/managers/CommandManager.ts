@@ -322,7 +322,7 @@ export class CommandManager extends CommandManagerBase {
    * @returns {(CommandStructureBased | null)}
    */
   public getCommand(name: string): CommandStructureBased | null {
-    return this.commands.entries().find((value) => { value[0].includes(name.toLowerCase()); })?.[1] || null;
+    return this.commands.entries().find((value) => value[0].includes(name.toLowerCase()))?.[1] || null;
   }
 
   /**
