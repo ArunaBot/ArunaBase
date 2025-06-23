@@ -19,7 +19,7 @@ export abstract class CommandStructureBase {
     }
   }
 
-  private checkAndFixName(name: string): string {
+  protected checkAndFixName(name: string): string {
     if (name.length > 32) throw new Error(`Command name or aliase: ${name} is too long (max 32, current: ${name.length})`);
     if (name.length < 1) throw new Error(`Command name or aliase: ${name} is too short (min 1, current: ${name.length})`);
     if (name !== name.toLowerCase()) {
