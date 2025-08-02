@@ -11,9 +11,9 @@ import {
   TextBasedChannel,
   User,
 } from 'discord.js';
-import { DiscordClient, MessageStructure } from '../discord';
+import { DiscordClient, MessageStructure } from '..';
 
-export interface IDiscordCommandContext {
+export interface ICommandContext {
   client: DiscordClient;
 
   reply(message: MessageStructure): Promise<Message<boolean> | InteractionResponse<boolean>>;

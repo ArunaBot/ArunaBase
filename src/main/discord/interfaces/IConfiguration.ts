@@ -1,6 +1,6 @@
 import { ClientOptions } from 'discord.js';
 
-export interface IDiscordConfiguration extends ClientOptions {
+export interface IConfiguration extends ClientOptions {
   botID?: string,
   token?: string,
   prefix?: string,

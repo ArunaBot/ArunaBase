@@ -1,5 +1,35 @@
 # Changelog
 
+## v1.0.0-ALPHA.14
+
+- [BREAKING]: Several interfaces were renamed in favor of their namespace usage  
+  - For example: `IDiscordOptions` -> `Discord.IOptions`
+
+- [BREAKING]: The `HTTP` namespace is no longer exported globally  
+  - Its internal dependencies make standalone usage impractical  
+  - If you need an HTTP client library, consider using [Axios](https://www.npmjs.com/package/axios) or Node.js built-in features
+
+- [BREAKING][discord]: The previously deprecated methods were permanently removed  
+  - `CommandManager#getGlobalCommands`  
+  - `CommandManager#getGlobalCommand`  
+  - `CommandManager#hasGlobalCommand`
+
+- [BREAKING]: `CommandManager` is now a singleton
+
+- [BREAKING]: `CommandManager` now stores commands in a native `Map` instead of a `Collection`  
+  - This is part of the abstraction effort, since `Collection` is provided by `discord.js`
+
+- [FEAT]: Began the process of abstraction for common functionality  
+  - All clients now extend `IClientBase`  
+  - `CommandManager` is no longer exclusive to Discord and will be implemented for other clients soon
+
+- [FEAT]: Introduced the new `Common` namespace  
+  - Contains interfaces and utilities shared across different clients
+
+- [FIX]: Various performance improvements were made
+
+- [CHORE]: Bump dependencies
+
 ## v1.0.0-ALPHA.13
 
 - [REVERT]: Reverted ALPHA.12 changes;
