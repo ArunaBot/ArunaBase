@@ -1,6 +1,6 @@
-import { IClientBase } from '../common';
-import { IConfiguration } from './interfaces';
 import { Client } from '@twitchapis/twitch.js';
+import { IConfiguration } from './interfaces';
+import { IClientBase } from '../common';
 
 export class TwitchClient extends Client implements IClientBase {
   private configuration: IConfiguration;
