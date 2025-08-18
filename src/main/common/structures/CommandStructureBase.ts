@@ -25,10 +25,10 @@ export abstract class CommandStructureBase {
     if (name !== name.toLowerCase()) {
       console.warn(`WARNING: Command name or aliase: ${name} is not lowercase, converting to lowercase`);
     }
-    if (name.includes(' ')) {
-      console.warn(`WARNING: Command name or aliase: ${name} has spaces, replacing spaces with _`);
+    if (name.match(/[^a-zA-Z0-9]+/g)?.[0]) {
+      console.warn(`WARNING: Command name or aliase: ${name} has spaces or special characters, replacing with _`);
     }
-    return name.toLowerCase().replace(/ /g, '_');
+    return name.toLowerCase().replace(/[^a-zA-Z0-9]+/g, '_');
   }
   
   public getName(): string {
