@@ -1,5 +1,5 @@
+import { EConditionalPrefixType } from '../interfaces';
 import { Message } from 'discord.js';
-import { EConditionalPrefixType } from '../../interfaces';
 
 export class ConditionalPrefixStructure {
   constructor(private prefix: string, private conditions: { type: EConditionalPrefixType, value: string }[]) {}

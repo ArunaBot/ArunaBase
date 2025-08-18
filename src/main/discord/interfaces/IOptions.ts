@@ -1,7 +1,7 @@
 import { ApplicationCommandOptionType, ApplicationCommandType, APIApplicationCommandOptionChoice, CategoryChannelType } from 'discord.js';
-import { IDiscordCommandContext } from './IDiscordCommandContext';
+import { ICommandContext, DiscordClient } from '..';
 import { Logger } from '@promisepending/logger.js';
-import { DiscordClient } from '../discord';
+import { ICommandOptionsBase } from '../../common';
 
 export interface ICommandManagerOptions {
   client: DiscordClient;
@@ -33,22 +33,20 @@ export interface ICommandParameter {
   autocomplete?: boolean;
 }
 
-export interface ICommandOptions {
-  description?: string;
+export interface ICommandOptions extends ICommandOptionsBase {
   name_localizations?: ILocalizationBase;
   description_localizations?: ILocalizationBase;
   isLegacyCommand?: boolean;
   isSlashCommand?: boolean;
   allowDM?: boolean;
-  command?: (context: IDiscordCommandContext) => void;
-  aliases?: string[];
+  command?: (context: ICommandContext) => void;
   parameters?: ICommandParameter[];
   type?: ApplicationCommandType;
   nsfw?: boolean;
 }
 
 export interface IAsyncCommandOptions extends ICommandOptions {
-  command?: (context: IDiscordCommandContext) => Promise<void>;
+  command?: (context: ICommandContext) => Promise<void>;
 }
 
 export interface StructuredCommand {
