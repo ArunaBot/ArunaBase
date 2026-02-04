@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.0.0-ALPHA.15
+
+- [TYPING][discord]: Better typing for command arguments;
+
+- [CHORE][discord]: Split SlashHandler and MessageHandler into separate files;
+  - This doesn't change any functionality or API, it's just a code organization improvement;
+
+- [CHORE]: Bump dependencies
+
 ## v1.0.0-ALPHA.14
 
 - [BREAKING]: Several interfaces were renamed in favor of their namespace usage  
