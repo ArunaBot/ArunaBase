@@ -65,7 +65,7 @@ export class CommandManager extends CommandManagerBase {
   private async endpointBufferRunner(): Promise<void> {
     if (!this.options.client.isReady()) {
       this.options.client.getLogger().debug('CommandManager: Client is not ready. Pausing endpoint buffer.');
-      this.options.client.once('ready', () => {
+      this.options.client.once('clientReady', () => {
         this.options.client.getLogger().debug('CommandManager: Ready event received. Resuming endpoint buffer.');
         this.endpointBufferRunner();
       });

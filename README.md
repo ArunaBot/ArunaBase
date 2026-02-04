@@ -64,7 +64,7 @@ const client = new Discord.DiscordClient({
 // use client.getCommandManager().generateCommand('Command name', Command parameters); to create a command.
 // use client.getCommandManager().registerCommand(command); to register that command.
 
-client.on('ready', () => {
+client.on('clientReady', () => {
   console.log('Bot is ready!');
 });
 
