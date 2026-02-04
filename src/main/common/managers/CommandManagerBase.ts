@@ -24,6 +24,5 @@ export abstract class CommandManagerBase {
 
   public abstract unregisterCommand(command: CommandStructureBase | CommandStructureBase[]): unknown | Promise<unknown>;
 
-
   public abstract getInstance(): CommandManagerBase;
 }
