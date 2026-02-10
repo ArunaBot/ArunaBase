@@ -152,6 +152,14 @@ export class MessageHandler {
         continue;
       }
 
+      if (param.choices && !param.choices.some(choice => choice.value === arg)) {
+        message.reply(this.listener.replyParser(
+          errorEmbed
+            .setDescription(`The argument \`${param.name}\` must be one of the following: ${param.choices.map(choice => `\`${choice.value}\``).join(', ')}.`),
+        )).catch();
+        return [null, []];
+      }
+
       let parsedArg: MsgArgs;
       
       switch (param.type) {
