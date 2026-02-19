@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.0.0-ALPHA.16
+
+- [FEAT][discord]: Added proper choice validation for command arguments;
+  - Now, if an argument has predefined choices, the library will validate the user's input against those choices and provide a clear error message if the input is invalid;
+
 ## v1.0.0-ALPHA.15
 
 - [TYPING][discord]: Better typing for command arguments;
