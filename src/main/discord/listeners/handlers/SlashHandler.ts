@@ -70,6 +70,9 @@ export class SlashHandler {
       deferReply: async (ephemeral = false): Promise<InteractionResponse<boolean>> => {
         return ctx.deferReply({ flags: ephemeral ? MessageFlags.Ephemeral : undefined });
       },
+      showModal: async (modal) => {
+        return ctx.showModal(modal);
+      },
       interaction: ctx,
     };
 
