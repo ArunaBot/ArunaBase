@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.0.0-ALPHA.17
+
+- [FEAT][discord]: Expose `showModal` method in the command context;
+  - This method allows you to show a modal to the user in response to a slash command interaction;
+  - It takes a `ModalBuilder` object as a parameter and returns a promise that resolves to an `InteractionCallbackResponse`;
+  - This method is only available for slash commands, as legacy commands don't support modals;
+
+- [TYPING][discord]: Better typing for 
+
 ## v1.0.0-ALPHA.16
 
 - [FEAT][discord]: Added proper choice validation for command arguments;
