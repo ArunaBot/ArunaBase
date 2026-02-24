@@ -7,7 +7,11 @@
   - It takes a `ModalBuilder` object as a parameter and returns a promise that resolves to an `InteractionCallbackResponse`;
   - This method is only available for slash commands, as legacy commands don't support modals;
 
-- [TYPING][discord]: Better typing for 
+- [FIX][discord]: Fixed an issue where, for legacy commands (prefix commands) with `allowDM: false`, argument prompts (such as asking for a member ID) would still appear in DMs, even though the command should not be available;
+
+- [CHANGE][discord]: The `ICommandContext` interface now includes an `isDM` property, which indicates whether the command was invoked in a DM channel or not;
+
+- [TYPING][discord]: Better typing for discord command context;
 
 ## v1.0.0-ALPHA.16
 
