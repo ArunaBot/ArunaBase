@@ -1,6 +1,7 @@
 import {
   ApplicationCommandOptionType,
   BooleanCache,
+  ChannelType,
   ChatInputCommandInteraction,
   GuildMember,
   Interaction,
@@ -25,6 +26,10 @@ export class SlashHandler {
   }
     
   public async run(ctx: Interaction): Promise<void> {
+    if (ctx.isModalSubmit()) {
+      this.manager.getClient().emit('modalSubmit', ctx);
+      return;
+    }
     if (!ctx.isCommand()) return;
 
     const context: ICommandContext = {
@@ -70,15 +75,19 @@ export class SlashHandler {
       deferReply: async (ephemeral = false): Promise<InteractionResponse<boolean>> => {
         return ctx.deferReply({ flags: ephemeral ? MessageFlags.Ephemeral : undefined });
       },
+      showModal: async (modal) => {
+        return ctx.showModal(modal);
+      },
+      isDM: ctx.channel?.type === ChannelType.DM,
       interaction: ctx,
     };
 
     this.listener.executeCommand(ctx.commandName, context).catch((error) => {
       const errorMessage = `An error occurred while execute command ${ctx.commandName}.`;
       if (!ctx.replied && !ctx.deferred) {
-        ctx.reply({ content: errorMessage, flags: MessageFlags.Ephemeral }).catch();
+        ctx.reply({ content: errorMessage, flags: MessageFlags.Ephemeral }).catch(() => {});
       } else if (ctx.deferred) {
-        ctx.editReply({ content: errorMessage }).catch();
+        ctx.editReply({ content: errorMessage }).catch(() => {});
       }
       this.client.getLogger().error(`${errorMessage}\nError:`, error);
     });

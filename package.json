@@ -1,6 +1,6 @@
 {
   "name": "arunabase",
-  "version": "1.0.0-ALPHA.16",
+  "version": "1.0.0-ALPHA.17",
   "description": "An API made to help developers what works with discord and twitch.",
   "main": "build/index.js",
   "types": "build/index.d.ts",
@@ -39,12 +39,12 @@
   "dependencies": {
     "@promisepending/logger.js": "^1.1.1",
     "@twitchapis/twitch.js": "^2.0.0-beta.7",
-    "arunacore-api": "^1.0.0-BETA.5",
+    "arunacore-api": "^1.0.0-BETA.7",
     "discord.js": "^14.25.1",
     "path-to-regexp": "^8.3.0"
   },
   "devDependencies": {
-    "@typescript-eslint/eslint-plugin": "^8.54.0",
+    "@typescript-eslint/eslint-plugin": "^8.56.1",
     "eslint": "^9.39.2",
     "eslint-plugin-import": "^2.32.0",
     "eslint-plugin-node": "^11.1.0",
