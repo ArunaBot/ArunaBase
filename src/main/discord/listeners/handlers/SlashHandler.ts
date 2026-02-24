@@ -26,6 +26,10 @@ export class SlashHandler {
   }
     
   public async run(ctx: Interaction): Promise<void> {
+    if (ctx.isModalSubmit()) {
+      this.manager.getClient().emit('modalSubmit', ctx);
+      return;
+    }
     if (!ctx.isCommand()) return;
 
     const context: ICommandContext = {

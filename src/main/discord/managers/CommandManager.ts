@@ -11,6 +11,7 @@ import { CommandManagerBase, EHTTP } from '../../common/';
 import { ApplicationCommandType } from 'discord.js';
 import { CommandListener } from '../listeners';
 import { HTTPClient } from '../utils/';
+import { DiscordClient } from '..';
 
 /**
  * CommandManager is a class responsible for managing and organizing the commands in a Discord bot.
@@ -37,6 +38,7 @@ import { HTTPClient } from '../utils/';
 export class CommandManager extends CommandManagerBase {
   protected override commands: Map<string[], CommandStructureBased> = new Map();
   protected static override instance: CommandManager;
+  private readonly client: DiscordClient;
 
   private customPrefixes: ConditionalPrefixStructure[] = [];
   private readonly commandListener: CommandListener;
@@ -52,21 +54,22 @@ export class CommandManager extends CommandManagerBase {
   constructor(options: ICommandManagerOptions) {
     super();
     this.options = options;
+    this.client = this.options.client;
     this.options.allowLegacyCommands = this.options.allowLegacyCommands ?? true;
     this.options.allowSlashCommands = this.options.allowSlashCommands ?? true;
     if (!this.options.prefix) this.options.allowLegacyCommands = false;
     this.httpClient = new HTTPClient();
-    this.commandListener = new CommandListener(this, this.options.client, this.options.allowLegacyCommands, this.options.allowSlashCommands, this.options.additionalContext ?? {});
+    this.commandListener = new CommandListener(this, this.client, this.options.allowLegacyCommands, this.options.allowSlashCommands, this.options.additionalContext ?? {});
 
     this.endpointsBuffer = [];
     this.processingBuffer = false;
   }
 
   private async endpointBufferRunner(): Promise<void> {
-    if (!this.options.client.isReady()) {
-      this.options.client.getLogger().debug('CommandManager: Client is not ready. Pausing endpoint buffer.');
-      this.options.client.once('clientReady', () => {
-        this.options.client.getLogger().debug('CommandManager: Ready event received. Resuming endpoint buffer.');
+    if (!this.client.isReady()) {
+      this.client.getLogger().debug('CommandManager: Client is not ready. Pausing endpoint buffer.');
+      this.client.once('clientReady', () => {
+        this.client.getLogger().debug('CommandManager: Ready event received. Resuming endpoint buffer.');
         this.endpointBufferRunner();
       });
       return;
@@ -77,8 +80,8 @@ export class CommandManager extends CommandManagerBase {
     const result = await this.httpClient.makeRequest(
       packetObject.type,
       'v10',
-      `applications/${this.options.client.application.id}${packetObject.route.startsWith('/') ? '' : '/'}${packetObject.route}`,
-      this.options.client.token,
+      `applications/${this.client.application.id}${packetObject.route.startsWith('/') ? '' : '/'}${packetObject.route}`,
+      this.client.token,
       packetObject.command ? JSON.stringify(packetObject.command) : null,
     );
     const data = JSON.parse((result[0] as string));
@@ -87,7 +90,7 @@ export class CommandManager extends CommandManagerBase {
     const remainingTillReset = parseInt((headers['x-ratelimit-remaining'] as string));
     let retryAfter = parseFloat((headers['x-ratelimit-reset-after'] as string)) * 1000;
     if (remainingTillReset === 0) {
-      this.options.client.getLogger().debug(
+      this.client.getLogger().debug(
         `CommandManager: Discord will rate limit the bot. Registering ${
           !(packetObject.command instanceof Array) ?
             packetObject.command!.name : packetObject.command!.map((i) => i.name).join(', ')
@@ -95,14 +98,14 @@ export class CommandManager extends CommandManagerBase {
       );
       setTimeout(() => {
         this.processingBuffer = false;
-        this.options.client.getLogger().debug('CommandManager: Discord rate limit reset. Resuming endpoint buffer.');
+        this.client.getLogger().debug('CommandManager: Discord rate limit reset. Resuming endpoint buffer.');
         this.endpointBufferRunner();
       }, retryAfter);
       return;
     }
     if (statusCode === 429) {
       retryAfter = (data.retry_after * 1000);
-      this.options.client.getLogger().debug(
+      this.client.getLogger().debug(
         `CommandManager: Discord rate limited the bot. Registering ${
           !(packetObject.command instanceof Array) ?
               packetObject.command!.name : packetObject.command!.map((i) => i.name).join(', ')
@@ -111,7 +114,7 @@ export class CommandManager extends CommandManagerBase {
       if (isNaN(retryAfter)) throw new Error('CommandManager: Discord rate limited the bot and didn\'t provide a retry-after value. You win!\n' + data);
       setTimeout(() => {
         this.processingBuffer = false;
-        this.options.client.getLogger().debug('CommandManager: Discord rate limit reset. Resuming endpoint buffer.');
+        this.client.getLogger().debug('CommandManager: Discord rate limit reset. Resuming endpoint buffer.');
         this.endpointBufferRunner();
       }, retryAfter);
       return;
@@ -194,7 +197,7 @@ export class CommandManager extends CommandManagerBase {
     if (commands.length === 0) throw new Error('CommandManager: Command array is empty.');
     if (commands.length === 1) return [(await this.registerCommand(commands[0]) as CommandStructureBased)];
 
-    this.options.client.getLogger().warn(
+    this.client.getLogger().warn(
       `CommandManager: A command array was passed, this will override all commands(slash, user and message) for this bot. (This will delete all commands that isn't in array)`,
     );
 
@@ -375,6 +378,10 @@ export class CommandManager extends CommandManagerBase {
       CommandManager.instance = new CommandManager(this.options);
     }
     return CommandManager.instance;
+  }
+
+  public getClient(): DiscordClient {
+    return this.client;
   }
 
   public getPrefix(): string | null {

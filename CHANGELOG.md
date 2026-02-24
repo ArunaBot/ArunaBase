@@ -7,6 +7,9 @@
   - It takes a `ModalBuilder` object as a parameter and returns a promise that resolves to an `InteractionCallbackResponse`;
   - This method is only available for slash commands, as legacy commands don't support modals;
 
+- [FEAT][discord]: Emit a `modalSubmit` event when a modal is submitted;
+  - This allows you to listen for modal submissions and handle them in your code;
+
 - [FIX][discord]: Fixed an issue where, for legacy commands (prefix commands) with `allowDM: false`, argument prompts (such as asking for a member ID) would still appear in DMs, even though the command should not be available;
 
 - [CHANGE][discord]: The `ICommandContext` interface now includes an `isDM` property, which indicates whether the command was invoked in a DM channel or not;
