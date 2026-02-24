@@ -16,6 +16,8 @@
 
 - [TYPING][discord]: Better typing for discord command context;
 
+- [CHORE]: Bump dependencies;
+
 ## v1.0.0-ALPHA.16
 
 - [FEAT][discord]: Added proper choice validation for command arguments;
