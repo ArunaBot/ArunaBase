@@ -31,7 +31,9 @@ export class MessageHandler {
 
     if (!prefix || !message.content.startsWith(prefix)) return;
 
-    const [command, args] = this.parseArgs(message, prefix);
+    const isDM = (message.channel.type === ChannelType.DM);
+
+    const [command, args] = this.parseArgs(message, prefix, isDM);
     
     if (!command) return;
 
@@ -99,15 +101,16 @@ export class MessageHandler {
       deferReply: async (): Promise<void> => {
         return (message.channel as TextChannel).sendTyping();
       },
+      isDM,
       args,
       message,
     };
-    this.listener.executeCommand(command, context, (message.channel.type === ChannelType.DM)).catch((error) => {
+    this.listener.executeCommand(command, context, isDM).catch((error) => {
       this.client.getLogger().error(`An error occurred while execute command ${command.getName()}.\nError:`, error);
     });
   }
 
-  private parseArgs(message: Message, prefix: string): [commandName: CommandStructureBased | null, commandArgs: MsgArgs[]] {
+  private parseArgs(message: Message, prefix: string, isDM: boolean): [commandName: CommandStructureBased | null, commandArgs: MsgArgs[]] {
     const args = message.content.slice(prefix.length).trim().split(/ +/);
     const commandName = args.shift()?.toLowerCase();
 
@@ -115,6 +118,22 @@ export class MessageHandler {
 
     const command = this.manager.getCommand(commandName);
     if (!command) return [null, []];
+
+    if (!command.isDMAllowed() && isDM) {
+      message.reply({ embeds: [
+        new RichEmbed()
+          .setTitle('DM Not Allowed')
+          .setDescription('This command cannot be used in Direct Messages.')
+          .setColor('Red')
+          .setTimestamp(),
+      ],
+      allowedMentions: { 
+        repliedUser: false,
+      },
+      }).catch();
+
+      return [null, []];
+    }
 
     const errorEmbed = new RichEmbed()
       .setTitle('Invalid Argument')

@@ -44,6 +44,8 @@ interface IBaseCommandContext {
   guild?: Guild | null;
   channel?: GuildTextBasedChannel | TextBasedChannel | null;
 
+  isDM: boolean;
+
   [key: symbol]: unknown;
 }
 
