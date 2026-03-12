@@ -12,7 +12,7 @@ import {
 import { CommandListener, MsgParams } from '../CommandListener';
 import { ButtonManager, CommandManager } from '../../managers';
 import { MessageStructure } from '../../structures';
-import { ICommandContext } from '../../interfaces';
+import { ICommandContext, MsgArgs } from '../../interfaces';
 import { DiscordClient } from '../../Client';
 
 export class SlashHandler {
@@ -32,26 +32,37 @@ export class SlashHandler {
     }
     if (!ctx.isCommand()) return;
 
+    const parsedArgs = new Map<string, MsgArgs>();
+    (ctx as ChatInputCommandInteraction).options.data.forEach((arg) => {
+      let value: MsgArgs;
+      switch (arg.type) {
+        case ApplicationCommandOptionType.User:
+          value = arg.user;
+          break;
+        case ApplicationCommandOptionType.Role:
+          value = arg.role;
+          break;
+        case ApplicationCommandOptionType.Channel:
+          value = arg.channel;
+          break;
+        case ApplicationCommandOptionType.Attachment:
+          value = arg.attachment;
+          break;
+        default:
+          value = arg.value as MsgArgs;
+          break;
+      }
+
+      parsedArgs.set(arg.name.toLowerCase(), value);
+    });
+
     const context: ICommandContext = {
       client: this.client,
       guild: ctx.guild,
       channel: ctx.channel,
       member: ctx.member as GuildMember,
       author: ctx.user,
-      args: (ctx as ChatInputCommandInteraction).options.data.map((arg) => {
-        switch (arg.type) {
-          case ApplicationCommandOptionType.User:
-            return arg.user;
-          case ApplicationCommandOptionType.Role:
-            return arg.role;
-          case ApplicationCommandOptionType.Channel:
-            return arg.channel;
-          case ApplicationCommandOptionType.Attachment:
-            return arg.attachment;
-          default:
-            return arg.value;
-        }
-      }),
+      args: parsedArgs,
       reply: async (...options: [MessageStructure] | MsgParams[]): Promise<Message<BooleanCache<any>> | InteractionResponse<boolean>> => {
         if (options.length === 1 && options[0] instanceof MessageStructure) return await ctx.reply(options[0]);
         return await ctx.reply(this.listener.replyParser(...(options as MsgParams[])));

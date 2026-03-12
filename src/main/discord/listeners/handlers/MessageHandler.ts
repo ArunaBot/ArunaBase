@@ -9,7 +9,7 @@ import {
 import { CommandStructureBased, MessageStructure } from '../../structures';
 import { CommandListener, MsgParams } from '../CommandListener';
 import { ButtonManager, CommandManager } from '../../managers';
-import { ICommandContext, MsgArgs } from '../../interfaces';
+import { ICommandContext, MsgArgs, MsgArgsMap } from '../../interfaces';
 import { DiscordClient } from '../../Client';
 import { RichEmbed } from '../../utils';
 
@@ -35,7 +35,7 @@ export class MessageHandler {
 
     const [command, args] = this.parseArgs(message, prefix, isDM);
     
-    if (!command) return;
+    if (!command || args == null) return;
 
     const context: ICommandContext = {
       client: this.client,
@@ -110,14 +110,14 @@ export class MessageHandler {
     });
   }
 
-  private parseArgs(message: Message, prefix: string, isDM: boolean): [commandName: CommandStructureBased | null, commandArgs: MsgArgs[]] {
+  private parseArgs(message: Message, prefix: string, isDM: boolean): [commandName: CommandStructureBased | null, commandArgs: MsgArgsMap | null] {
     const args = message.content.slice(prefix.length).trim().split(/ +/);
     const commandName = args.shift()?.toLowerCase();
 
-    if (!commandName) return [null, []];
+    if (!commandName) return [null, null];
 
     const command = this.manager.getCommand(commandName);
-    if (!command) return [null, []];
+    if (!command) return [null, null];
 
     if (!command.isDMAllowed() && isDM) {
       message.reply({ embeds: [
@@ -132,7 +132,7 @@ export class MessageHandler {
       },
       }).catch();
 
-      return [null, []];
+      return [null, null];
     }
 
     const errorEmbed = new RichEmbed()
@@ -140,18 +140,42 @@ export class MessageHandler {
       .setColor('Red')
       .setTimestamp();
 
-    const requiredParams = command.getParameters().filter((param) => param.required);
-    if (requiredParams.length > args.length) {
-      // TODO: Allow custom error message
+    const parameters = command.getParameters().filter((param) => (
+      param.type !== ApplicationCommandOptionType.Subcommand &&
+      param.type !== ApplicationCommandOptionType.SubcommandGroup
+    ));
+    const commandUsage = parameters.map((param) => {
+      if (param.required) return `<${param.name}=...>`;
+      return `[${param.name}=...]`;
+    }).join(' ');
+
+    const availableParameterNames = new Set(parameters.map((param) => param.name.toLowerCase()));
+    const namedRawArgs = new Map<string, string>();
+    const positionalRawArgs: string[] = [];
+    const unknownNamedArgs: string[] = [];
+
+    for (const rawArg of args) {
+      const namedMatch = rawArg.match(/^--?([^:=\s]+)[:=](.*)$/);
+      if (namedMatch) {
+        const paramName = namedMatch[1].toLowerCase();
+        if (!availableParameterNames.has(paramName)) {
+          unknownNamedArgs.push(paramName);
+          continue;
+        }
+
+        namedRawArgs.set(paramName, namedMatch[2]);
+        continue;
+      }
+
+      positionalRawArgs.push(rawArg);
+    }
+
+    if (unknownNamedArgs.length > 0) {
       message.reply(this.listener.replyParser(
         errorEmbed
-          .setTitle('Missing Arguments')
-          .setDescription(`Command Usage: \`${prefix}${commandName} ${requiredParams.map((param) => {
-            if (!param.required) return `[${param.name}]`;
-            return `<${param.name}>`;
-          }).join(' ')}\``),
+          .setDescription(`Unknown named argument(s): ${unknownNamedArgs.map((param) => `\`${param}\``).join(', ')}.`),
       )).catch();
-      return [null, []];
+      return [null, null];
     }
 
     const users = message.mentions.users.values().toArray();
@@ -159,122 +183,153 @@ export class MessageHandler {
     const channels = message.mentions.channels.values().toArray();
     const attachments = message.attachments.values().toArray();
 
-    const commandArgs: MsgArgs[] = [];
-    for (const param of command.getParameters()) {
-      if (param.required && args.length === 0) {
-        // If a required parameter is missing, we stop parsing
-        break;
+    const commandArgs: MsgArgsMap = new Map();
+    for (let index = 0; index < parameters.length; index++) {
+      const param = parameters[index];
+      const paramName = param.name.toLowerCase();
+      const hasNamedArg = namedRawArgs.has(paramName);
+
+      let rawArg = hasNamedArg ? namedRawArgs.get(paramName) : positionalRawArgs.shift();
+
+      if (!hasNamedArg &&
+        rawArg !== undefined &&
+        param.type === ApplicationCommandOptionType.String &&
+        index === parameters.length - 1 &&
+        positionalRawArgs.length > 0) {
+        rawArg = [rawArg, ...positionalRawArgs].join(' ');
+        positionalRawArgs.length = 0;
       }
 
-      const arg = args.shift();
-      if (!arg) {
+      if (rawArg === undefined || rawArg.length === 0) {
+        if (param.required) {
+          message.reply(this.listener.replyParser(
+            errorEmbed
+              .setTitle('Missing Arguments')
+              .setDescription(`Command Usage: \`${prefix}${commandName} ${commandUsage}\``),
+          )).catch();
+          return [null, null];
+        }
+
         continue;
       }
 
-      if (param.choices && !param.choices.some(choice => choice.value === arg)) {
+      if (param.choices && !param.choices.some(choice => choice.value === rawArg)) {
         message.reply(this.listener.replyParser(
           errorEmbed
             .setDescription(`The argument \`${param.name}\` must be one of the following: ${param.choices.map(choice => `\`${choice.value}\``).join(', ')}.`),
         )).catch();
-        return [null, []];
+        return [null, null];
       }
 
-      let parsedArg: MsgArgs;
+      let parsedArg: MsgArgs | undefined;
       
       switch (param.type) {
         case ApplicationCommandOptionType.String:
-          if (arg.length < (param.min_length ?? 0) || arg.length > (param.max_length ?? 2000)) {
+          if (rawArg.length < (param.min_length ?? 0) || rawArg.length > (param.max_length ?? 2000)) {
             message.reply(this.listener.replyParser(
               errorEmbed
                 .setDescription(`The argument \`${param.name}\` must be between ${param.min_length ?? 0} and ${param.max_length ?? 2000} characters long.`),
             )).catch();
-            return [null, []];
+            return [null, null];
           }
-          parsedArg = arg;
+          parsedArg = rawArg;
           break;
         case ApplicationCommandOptionType.Integer: {
-          const intVal = parseInt(arg, 10);
-          if (isNaN(intVal) || !Number.isInteger(intVal)) {
+          if (!/^-?\d+$/.test(rawArg)) {
             message.reply(this.listener.replyParser(
               errorEmbed
                 .setDescription(`The argument \`${param.name}\` must be a valid integer.`),
             )).catch();
-            return [null, []];
+            return [null, null];
           }
+
+          const intVal = parseInt(rawArg, 10);
           if (intVal < (param.min_value ?? Number.MIN_SAFE_INTEGER) || intVal > (param.max_value ?? Number.MAX_SAFE_INTEGER)) {
             message.reply(this.listener.replyParser(
               errorEmbed
                 .setDescription(`The argument \`${param.name}\` must be between ${param.min_value ?? Number.MIN_SAFE_INTEGER} and ${param.max_value ?? Number.MAX_SAFE_INTEGER}.`),
             )).catch();
-            return [null, []];
+            return [null, null];
           }
           parsedArg = intVal;
           break;
         }
         case ApplicationCommandOptionType.Number: {
-          const floatVal = parseFloat(arg);
+          const floatVal = Number(rawArg);
           if (isNaN(floatVal)) {
             message.reply(this.listener.replyParser(
               errorEmbed
                 .setDescription(`The argument \`${param.name}\` must be a valid number.`),
             )).catch();
-            return [null, []];
+            return [null, null];
           }
           if (floatVal < (param.min_value ?? Number.MIN_SAFE_INTEGER) || floatVal > (param.max_value ?? Number.MAX_SAFE_INTEGER)) {
             message.reply(this.listener.replyParser(
               errorEmbed
                 .setDescription(`The argument \`${param.name}\` must be between ${param.min_value ?? Number.MIN_SAFE_INTEGER} and ${param.max_value ?? Number.MAX_SAFE_INTEGER}.`),
             )).catch();
-            return [null, []];
+            return [null, null];
           }
           parsedArg = floatVal;
           break;
         }
         case ApplicationCommandOptionType.Boolean:
-          if (arg.toLowerCase() === 'true' || arg === '1') {
+          if (rawArg.toLowerCase() === 'true' || rawArg === '1') {
             parsedArg = true;
-          } else if (arg.toLowerCase() === 'false' || arg === '0') {
+          } else if (rawArg.toLowerCase() === 'false' || rawArg === '0') {
             parsedArg = false;
           } else {
             message.reply(this.listener.replyParser(
               errorEmbed
                 .setDescription(`The argument \`${param.name}\` must be a valid boolean (true/false).`),
             )).catch();
-            return [null, []];
+            return [null, null];
           }
           break;
         case ApplicationCommandOptionType.User: {
-          const user = users.shift() || this.client.users.cache.get(arg);
+          const userId = rawArg.replace(/[<@!>]/g, '');
+          const user = message.mentions.users.get(userId) || users.shift() || this.client.users.cache.get(userId) || this.client.users.cache.get(rawArg);
           if (!user) {
             message.reply(this.listener.replyParser(
               errorEmbed
                 .setDescription(`The argument \`${param.name}\` must be a valid user mention or ID.`),
             )).catch();
-            return [null, []];
+            return [null, null];
           }
           parsedArg = user;
           break;
         }
         case ApplicationCommandOptionType.Channel: {
-          const channel = (channels.shift() || this.client.channels.cache.get(arg)) as GuildBasedChannel | undefined;
+          const channelId = rawArg.replace(/[<#>]/g, '');
+          const channel = (message.mentions.channels.get(channelId) ||
+            channels.shift() ||
+            this.client.channels.cache.get(channelId) ||
+            this.client.channels.cache.get(rawArg)
+          ) as GuildBasedChannel | undefined;
+          
           if (!channel) {
             message.reply(this.listener.replyParser(
               errorEmbed
                 .setDescription(`The argument \`${param.name}\` must be a valid channel mention or ID.`),
             )).catch();
-            return [null, []];
+            return [null, null];
           }
           parsedArg = channel;
           break;
         }
         case ApplicationCommandOptionType.Role: {
-          const role = roles.shift() || this.client.guilds.cache.get(message.guildId!)?.roles.cache.get(arg);
+          const roleId = rawArg.replace(/[<@&>]/g, '');
+          const role = message.mentions.roles.get(roleId) ||
+            roles.shift() ||
+            this.client.guilds.cache.get(message.guildId!)?.roles.cache.get(roleId) ||
+            this.client.guilds.cache.get(message.guildId!)?.roles.cache.get(rawArg);
+
           if (!role) {
             message.reply(this.listener.replyParser(
               errorEmbed
                 .setDescription(`The argument \`${param.name}\` must be a valid role mention or ID.`),
             )).catch();
-            return [null, []];
+            return [null, null];
           }
           parsedArg = role;
           break;
@@ -286,13 +341,13 @@ export class MessageHandler {
               errorEmbed
                 .setDescription(`The argument \`${param.name}\` must be a valid attachment.`),
             )).catch();
-            return [null, []];
+            return [null, null];
           }
           parsedArg = attachment;
           break;
         }
         case ApplicationCommandOptionType.Mentionable:
-          parsedArg = arg;
+          parsedArg = rawArg;
           break;
         case ApplicationCommandOptionType.Subcommand:
         case ApplicationCommandOptionType.SubcommandGroup:
@@ -300,14 +355,19 @@ export class MessageHandler {
           break;
       }
 
-      if (!parsedArg) continue;
+      if (parsedArg === undefined || parsedArg === null) continue;
 
-      commandArgs.push(parsedArg);
+      commandArgs.set(paramName, parsedArg);
     }
 
-    if (args.length > 0) {
-      commandArgs.push(args.join(' '));
+    if (positionalRawArgs.length > 0) {
+      message.reply(this.listener.replyParser(
+        errorEmbed
+          .setDescription(`Unexpected extra argument(s): ${positionalRawArgs.map((arg) => `\`${arg}\``).join(', ')}.`),
+      )).catch();
+      return [null, null];
     }
+
     return [command, commandArgs];
   }
 }
