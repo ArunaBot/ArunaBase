@@ -1,5 +1,31 @@
 # Changelog
 
+## v1.0.0-ALPHA.18
+
+- [BREAKING][discord]: The `args` property in `ICommandContext` is now a `Map<string, MsgArgs>` instead of `MsgArgs[]`;
+  - Arguments are now keyed by their parameter name (lowercase), matching the behavior of slash commands;
+  - This affects both legacy (prefix) commands and slash commands;
+  - Update any code that accesses `context.args` by index (e.g. `args[0]`) to use `args.get('paramName')` instead;
+
+- [FEAT][discord]: Legacy commands now support named arguments;
+  - Arguments can be passed by name using the `--name=value` or `-name:value` syntax, in addition to the traditional positional syntax;
+  - Positional and named arguments can be mixed freely;
+
+- [FEAT][discord]: The last `String` parameter of a legacy command now automatically captures all remaining positional tokens as a single joined string;
+
+- [FIX][discord]: Passing extra positional arguments that exceed the command's parameter count now returns a clear error message instead of silently being appended to the last argument;
+  - Unknown named arguments also produce a clear error message;
+
+- [FIX][discord]: User, channel, and role resolution now correctly strips mention formatting (e.g. `<@123>`, `<#456>`, `<@&789>`) before resolving by ID;
+
+- [FIX][discord]: Integer validation now uses a strict regex (`/^-?\d+$/`) instead of `parseInt`, preventing strings like `"12abc"` from being accepted as valid integers;
+
+- [FIX][discord]: Number validation now uses `Number()` instead of `parseFloat`, improving consistency with JavaScript's standard numeric coercion;
+
+- [FIX][discord]: Subcommand and SubcommandGroup option types are now excluded from parameter iteration and the usage string, preventing them from being treated as regular arguments;
+
+- [CHORE]: Bump dependencies;
+
 ## v1.0.0-ALPHA.17
 
 - [FEAT][discord]: Expose `showModal` method in the command context;
