@@ -21,6 +21,7 @@ import {
 import { DiscordClient, MessageStructure } from '..';
 
 export type MsgArgs = string | number | boolean | User | APIRole | Role | GuildBasedChannel | APIInteractionDataResolvedChannel | Attachment | null | undefined;
+export type MsgArgsMap = Map<string, MsgArgs>;
 
 interface IBaseCommandContext {
   client: DiscordClient;
@@ -38,7 +39,7 @@ interface IBaseCommandContext {
   deferReply: (ephemeral?: boolean) => Promise<void | InteractionResponse<boolean>>;
 
   messageReplyContent?: Message<boolean> | null;
-  args: MsgArgs[];
+  args: MsgArgsMap;
   author: User;
   member?: GuildMember | null;
   guild?: Guild | null;
