@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.0.0-ALPHA.19
+
+- [CHORE]: Removed unused dependency `path-to-regexp`;
+
+- [CHORE][DISCORD]: Upgraded to Discord.js v14.26.2;
+  - This version includes several bug fixes and improvements;
+
 ## v1.0.0-ALPHA.18
 
 - [BREAKING][discord]: The `args` property in `ICommandContext` is now a `Map<string, MsgArgs>` instead of `MsgArgs[]`;
