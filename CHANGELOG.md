@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.0.0-ALPHA.20
+- [CHORE]: Bump dependencies;
+  - This fixes some security vulnerabilities in the dependencies, so it's recommended to update to this version as soon as possible;
+
 ## v1.0.0-ALPHA.19
 
 - [CHORE]: Removed unused dependency `path-to-regexp`;
