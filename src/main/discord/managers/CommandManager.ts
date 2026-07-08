@@ -77,64 +77,81 @@ export class CommandManager extends CommandManagerBase {
     const packetObject = this.endpointsBuffer[0];
     if (!packetObject || this.processingBuffer) return;
     this.processingBuffer = true;
-    const result = await this.httpClient.makeRequest(
-      packetObject.type,
-      'v10',
-      `applications/${this.client.application.id}${packetObject.route.startsWith('/') ? '' : '/'}${packetObject.route}`,
-      this.client.token,
-      packetObject.command ? JSON.stringify(packetObject.command) : null,
-    );
-    const data = JSON.parse((result[0] as string));
-    const headers = result[2];
-    const statusCode = result[1];
-    const remainingTillReset = parseInt((headers['x-ratelimit-remaining'] as string));
-    let retryAfter = parseFloat((headers['x-ratelimit-reset-after'] as string)) * 1000;
-    if (remainingTillReset === 0) {
-      this.client.getLogger().debug(
-        `CommandManager: Discord will rate limit the bot. Registering ${
-          !(packetObject.command instanceof Array) ?
-            packetObject.command!.name : packetObject.command!.map((i) => i.name).join(', ')
-        }. Retrying after ${retryAfter}ms.`,
+    let shouldAdvanceBuffer = true;
+
+    try {
+      const result = await this.httpClient.makeRequest(
+        packetObject.type,
+        'v10',
+        `applications/${this.client.application.id}${packetObject.route.startsWith('/') ? '' : '/'}${packetObject.route}`,
+        this.client.token,
+        packetObject.command ? JSON.stringify(packetObject.command) : null,
       );
-      setTimeout(() => {
-        this.processingBuffer = false;
-        this.client.getLogger().debug('CommandManager: Discord rate limit reset. Resuming endpoint buffer.');
-        this.endpointBufferRunner();
-      }, retryAfter);
-      return;
-    }
-    if (statusCode === 429) {
-      retryAfter = (data.retry_after * 1000);
-      this.client.getLogger().debug(
-        `CommandManager: Discord rate limited the bot. Registering ${
-          !(packetObject.command instanceof Array) ?
+      const data = JSON.parse((result[0] as string));
+      const headers = result[2];
+      const statusCode = result[1];
+      const remainingTillReset = parseInt((headers['x-ratelimit-remaining'] as string));
+      let retryAfter = parseFloat((headers['x-ratelimit-reset-after'] as string)) * 1000;
+
+      if (remainingTillReset === 0) {
+        shouldAdvanceBuffer = false;
+        this.client.getLogger().debug(
+          `CommandManager: Discord will rate limit the bot. Registering ${
+            !(packetObject.command instanceof Array) ?
               packetObject.command!.name : packetObject.command!.map((i) => i.name).join(', ')
-        }. Retrying after ${retryAfter}ms.`,
-      );
-      if (isNaN(retryAfter)) throw new Error('CommandManager: Discord rate limited the bot and didn\'t provide a retry-after value. You win!\n' + data);
-      setTimeout(() => {
+          }. Retrying after ${retryAfter}ms.`,
+        );
+        setTimeout(() => {
+          this.processingBuffer = false;
+          this.client.getLogger().debug('CommandManager: Discord rate limit reset. Resuming endpoint buffer.');
+          this.endpointBufferRunner();
+        }, retryAfter);
+        return;
+      }
+
+      if (statusCode === 429) {
+        retryAfter = (data.retry_after * 1000);
+        shouldAdvanceBuffer = false;
+        this.client.getLogger().debug(
+          `CommandManager: Discord rate limited the bot. Registering ${
+            !(packetObject.command instanceof Array) ?
+                packetObject.command!.name : packetObject.command!.map((i) => i.name).join(', ')
+          }. Retrying after ${retryAfter}ms.`,
+        );
+        if (isNaN(retryAfter)) throw new Error('CommandManager: Discord rate limited the bot and didn\'t provide a retry-after value. You win!\n' + data);
+        setTimeout(() => {
+          this.processingBuffer = false;
+          this.client.getLogger().debug('CommandManager: Discord rate limit reset. Resuming endpoint buffer.');
+          this.endpointBufferRunner();
+        }, retryAfter);
+        return;
+      }
+
+      packetObject.resolve([data, statusCode, headers]);
+    } catch (error) {
+      packetObject.reject(error);
+    } finally {
+      if (shouldAdvanceBuffer) {
         this.processingBuffer = false;
-        this.client.getLogger().debug('CommandManager: Discord rate limit reset. Resuming endpoint buffer.');
+        this.endpointsBuffer.shift();
         this.endpointBufferRunner();
-      }, retryAfter);
-      return;
+      }
     }
-    if (packetObject.callback) packetObject.callback([data, statusCode, headers]);
-    this.processingBuffer = false;
-    this.endpointsBuffer.shift();
-    this.endpointBufferRunner();
   }
 
-  private makeEndpointRequest(type: EHTTP, [route, command]: [string, (StructuredCommand | StructuredCommand[])?], callback?: (requestResult: unknown) => void, priority = false): void {
-    const packetObject = {
-      type,
-      route,
-      command,
-      callback,
-    };
-    if (priority) this.endpointsBuffer.unshift(packetObject);
-    else this.endpointsBuffer.push(packetObject);
-    this.endpointBufferRunner();
+  private makeEndpointRequest(type: EHTTP, [route, command]: [string, (StructuredCommand | StructuredCommand[])?], priority = false): Promise<unknown> {
+    return new Promise((resolve, reject) => {
+      const packetObject = {
+        type,
+        route,
+        command,
+        resolve,
+        reject,
+      };
+      if (priority) this.endpointsBuffer.unshift(packetObject);
+      else this.endpointsBuffer.push(packetObject);
+      this.endpointBufferRunner();
+    });
   }
 
   /**
@@ -163,22 +180,21 @@ export class CommandManager extends CommandManagerBase {
 
       if (command.getParameters().length > 0) structuredCommand['options'] = command.getParameters();
 
-      this.makeEndpointRequest(
+      const requestResult = await this.makeEndpointRequest(
         EHTTP.POST,
         [
           'commands',
           structuredCommand,
         ],
-        (requestResult) => {
-          if (!requestResult || !(requestResult instanceof Array)) throw new Error('CommandManager: Request result is not defined. You win!');
-          if (requestResult.length < 2) throw new Error('CommandManager: Request result is not valid. Are you okay?');
-          const commandRegisterSuccessfully = ((requestResult[1] === 201) || (requestResult[1] === 200));
-
-          if (!commandRegisterSuccessfully) throw new Error(`Command ${command.getName()} could not be registered.\nStatus code: ${requestResult[1]}\nResponse: ${requestResult[0]}`);
-
-          command.setSlashId(requestResult[0].id);
-        },
       );
+
+      if (!requestResult || !(requestResult instanceof Array)) throw new Error('CommandManager: Request result is not defined. You win!');
+      if (requestResult.length < 2) throw new Error('CommandManager: Request result is not valid. Are you okay?');
+      const commandRegisterSuccessfully = ((requestResult[1] === 201) || (requestResult[1] === 200));
+
+      if (!commandRegisterSuccessfully) throw new Error(`Command ${command.getName()} could not be registered.\nStatus code: ${requestResult[1]}\nResponse: ${requestResult[0]}`);
+
+      command.setSlashId((requestResult[0] as { id: string }).id);
     }
 
     this.commands.set(command.getAliases(), command);
@@ -227,24 +243,23 @@ export class CommandManager extends CommandManagerBase {
       structuredCommands.push(structuredCommand);
     }
 
-    this.makeEndpointRequest(
+    const requestResult = await this.makeEndpointRequest(
       EHTTP.PUT,
       [
         'commands',
         slashStructuredCommands,
       ],
-      (requestResult) => {
-        if (!requestResult || !(requestResult instanceof Array)) throw new Error('CommandManager: Request result is not defined. You win!');
-        if (requestResult.length < 2) throw new Error('CommandManager: Request result is not valid. Are you okay?');
-        const commandRegisterSuccessfully = ((requestResult[1] === 201) || (requestResult[1] === 200));
-
-        if (!commandRegisterSuccessfully) throw new Error(`Commands ${commands.map((i) => i.getName()).join(', ')} could not be registered.\nResponse: ${JSON.stringify(requestResult[0])}`);
-
-        for (const command of slashCommands) {
-          command.setSlashId(requestResult[0].id);
-        }
-      },
     );
+
+    if (!requestResult || !(requestResult instanceof Array)) throw new Error('CommandManager: Request result is not defined. You win!');
+    if (requestResult.length < 2) throw new Error('CommandManager: Request result is not valid. Are you okay?');
+    const commandRegisterSuccessfully = ((requestResult[1] === 201) || (requestResult[1] === 200));
+
+    if (!commandRegisterSuccessfully) throw new Error(`Commands ${commands.map((i) => i.getName()).join(', ')} could not be registered.\nResponse: ${JSON.stringify(requestResult[0])}`);
+
+    for (const command of slashCommands) {
+      command.setSlashId((requestResult[0] as { id: string }).id);
+    }
 
     return commands;
   }
@@ -293,15 +308,14 @@ export class CommandManager extends CommandManagerBase {
     if (!command) throw new Error('CommandManager: Command is not defined.');
     if (!this.hasCommand(command.getAliases())) throw new Error(`Command ${command.getName()} doesn't exists.`);
     if (command.isSlash()) {
-      this.makeEndpointRequest(
+      const requestResult = await this.makeEndpointRequest(
         EHTTP.DELETE,
         [`commands/${command.getSlashId()}`],
-        (requestResult) => {
-          if (!requestResult || !(requestResult instanceof Array)) throw new Error('CommandManager: Request result is not defined. You win!');
-          // 204 status code: command unregistered successfully
-          if (requestResult[1] !== 204) throw new Error(`Command ${command.getName()} couldn't be unregistered.\nResponse: ${requestResult[0]}`);
-        },
       );
+
+      if (!requestResult || !(requestResult instanceof Array)) throw new Error('CommandManager: Request result is not defined. You win!');
+      // 204 status code: command unregistered successfully
+      if (requestResult[1] !== 204) throw new Error(`Command ${command.getName()} couldn't be unregistered.\nResponse: ${requestResult[0]}`);
     }
 
     return this.commands.delete(command.getAliases());
