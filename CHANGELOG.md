@@ -1,6 +1,11 @@
 # Changelog
 
 ## v1.0.0-ALPHA.21
+- [FIX]: Fixed a bug where the command description was not being validated for length;
+
+- [FIX]: Command names and aliases with _ now doesn't trigger a warning about special characters, as _ is a valid character in command names;
+  - Before that, we were replacing _ with another _ in the command name, which was unnecessary;
+
 - [FIX][discord]: Command registration errors now propagate back to the caller instead of crashing the internal request queue;
 
 - [CHORE]: Bump dependencies;

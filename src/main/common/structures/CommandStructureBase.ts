@@ -9,7 +9,7 @@ export abstract class CommandStructureBase {
 
   constructor(name: string, options: ICommandOptionsBase) {
     this.name = this.checkAndFixName(name);
-    this.description = options.description ?? '';
+    this.description = this.checkDescription(options.description);
     this.aliases = options.aliases ?? [];
 
     this.aliases = this.aliases.map(alias => this.checkAndFixName(alias));
@@ -25,10 +25,16 @@ export abstract class CommandStructureBase {
     if (name !== name.toLowerCase()) {
       console.warn(`WARNING: Command name or aliase: ${name} is not lowercase, converting to lowercase`);
     }
-    if (name.match(/[^a-zA-Z0-9]+/g)?.[0]) {
+    if (name.match(/[^a-zA-Z0-9_]+/g)?.[0]) {
       console.warn(`WARNING: Command name or aliase: ${name} has spaces or special characters, replacing with _`);
     }
-    return name.toLowerCase().replace(/[^a-zA-Z0-9]+/g, '_');
+    return name.toLowerCase().replace(/[^a-zA-Z0-9_]+/g, '_');
+  }
+
+  protected checkDescription(description: string): string {
+    if (description.length > 100) throw new Error(`Command description: ${description} is too long (max 100, current: ${description.length})`);
+    if (description.length < 1) throw new Error(`Command description: ${description} is too short (min 1, current: ${description.length})`);
+    return description;
   }
   
   public getName(): string {

@@ -41,6 +41,12 @@ abstract class DiscordCommandStructureBase extends CommandStructureBase {
           if (aliase !== this.getName()) this.aliases.push(aliase as string);
         });
       }
+
+      if (options.description_localizations) {
+        Object.values(options.description_localizations).forEach((description) => {
+          description = this.checkDescription(description);
+        });
+      }
     } else {
       this.isLocalized = false;
       this.localizations = null;
