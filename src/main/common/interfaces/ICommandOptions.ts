@@ -1,4 +1,4 @@
 export interface ICommandOptionsBase {
-  description?: string;
+  description: string;
   aliases?: string[];
 }

@@ -5,5 +5,6 @@ export interface IEndPointStructure {
   type: EHTTP,
   route: string,
   command?: StructuredCommand | StructuredCommand[],
-  callback?: (requestResult: unknown) => void,
+  resolve: (requestResult: unknown) => void,
+  reject: (reason: unknown) => void,
 }
