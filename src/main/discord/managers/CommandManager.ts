@@ -274,7 +274,9 @@ export class CommandManager extends CommandManagerBase {
     if (!prefix) throw new Error('CommandManager: Prefix is not defined.');
     if (!condition) throw new Error('CommandManager: Condition is not defined.');
 
-    if (this.customPrefixes.some((p) => p.getConditions().some((c) => c === condition))) throw new Error('CommandManager: Custom prefix with the same condition already exists.');
+    if (this.customPrefixes.some((p) => p.getConditions().some((c) => c.type === condition.type && c.value === condition.value))) {
+      throw new Error('CommandManager: Custom prefix with the same condition already exists.');
+    }
 
     const customPrefix = this.customPrefixes.find((customPrefix) => prefix === customPrefix.getPrefix());
     if (customPrefix) customPrefix.addCondition(condition.type, condition.value);
