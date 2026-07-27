@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.0.0-ALPHA.22
+- [FIX][discord]: Fixed `CommandManager#registerCustomPrefix` comparing conditions by object reference instead of by value, which meant the duplicate-condition check never triggered;
+  - As a result, the same prefix condition could silently be registered more than once instead of throwing the documented error;
+
 ## v1.0.0-ALPHA.21
 - [FIX]: Fixed a bug where the command description was not being validated for length;
 
@@ -18,7 +22,7 @@
 
 - [CHORE]: Removed unused dependency `path-to-regexp`;
 
-- [CHORE][DISCORD]: Upgraded to Discord.js v14.26.2;
+- [CHORE][discord]: Upgraded to Discord.js v14.26.2;
   - This version includes several bug fixes and improvements;
 
 ## v1.0.0-ALPHA.18
