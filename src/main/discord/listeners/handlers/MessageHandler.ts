@@ -119,6 +119,8 @@ export class MessageHandler {
     const command = this.manager.getCommand(commandName);
     if (!command) return [null, null];
 
+    if (!command.isLegacy()) return [null, null];
+
     if (!command.isDMAllowed() && isDM) {
       message.reply({ embeds: [
         new RichEmbed()

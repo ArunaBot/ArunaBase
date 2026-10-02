@@ -3,6 +3,9 @@
 ## v1.0.0-ALPHA.23
 - [FIX][discord]: Fixed a bug that caused nfsw commands to be registered as non-nfsw commands;
   - Before the fix, the `nsfw` property was not being sent correctly to discord when registering commands;
+- [FIX][discord]: Fixed a bug that caused the flag `isLegacyCommand` to be ignored in runtime;
+  - Before that, the `isLegacyCommand` flag was not being checked when executing commands, which caused legacy commands to be executed when they shouldn't be;
+
 ## v1.0.0-ALPHA.22
 - [FIX][discord]: Fixed `CommandManager#registerCustomPrefix` comparing conditions by object reference instead of by value, which meant the duplicate-condition check never triggered;
   - As a result, the same prefix condition could silently be registered more than once instead of throwing the documented error;
