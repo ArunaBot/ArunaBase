@@ -137,6 +137,13 @@ export class MessageHandler {
       return [null, null];
     }
 
+    if (!isDM &&
+      command.getPermissions().toArray().length > 0 &&
+      !message.member?.permissions.has(command.getPermissions())
+    ) {
+      return [null, null];
+    }
+
     const errorEmbed = new RichEmbed()
       .setTitle('Invalid Argument')
       .setColor('Red')

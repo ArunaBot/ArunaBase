@@ -3,6 +3,7 @@ import {
   ApplicationCommandType,
   APIApplicationCommandOptionChoice,
   CategoryChannelType,
+  PermissionResolvable,
   InteractionContextType,
 } from 'discord.js';
 
@@ -50,6 +51,7 @@ export interface ICommandOptions extends ICommandOptionsBase {
   parameters?: ICommandParameter[];
   type?: ApplicationCommandType;
   nsfw?: boolean;
+  permissions?: PermissionResolvable[];
 }
 
 export interface IAsyncCommandOptions extends ICommandOptions {
@@ -68,4 +70,5 @@ export interface StructuredCommand {
   description_localizations?: Record<string, string>;
   options?: ICommandParameter[];
   guild_id?: string;
+  default_member_permissions?: bigint | null;
 }

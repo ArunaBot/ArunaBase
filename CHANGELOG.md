@@ -1,6 +1,11 @@
 # Changelog
 
 ## v1.0.0-ALPHA.23
+- [FEAT][discord]: Added support for command permissions;
+  - You can now set the required permissions for a command by filling the `permissions` property in the command structure;
+  - The method takes a `PermissionResolvable` array as a parameter;
+- [FIX][discord]: Fixed a bug where subcommands that doesn't include a `options` property would throw an error when registering the command;
+  - Before the fix, not including the `options` property would cause the library to throw an error, even though it's valid to omit it for subcommands;
 - [FIX][discord]: Fixed a bug that caused nfsw commands to be registered as non-nfsw commands;
   - Before the fix, the `nsfw` property was not being sent correctly to discord when registering commands;
 - [FIX][discord]: Fixed a bug that caused the flag `isLegacyCommand` to be ignored in runtime;

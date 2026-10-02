@@ -6,12 +6,13 @@ import {
   ILocalizationBase,
   ICommandContext,
 } from '../interfaces';
-import { ApplicationCommandOptionType, ApplicationCommandType } from 'discord.js';
+import { ApplicationCommandOptionType, ApplicationCommandType, PermissionsBitField } from 'discord.js';
 import { CommandStructureBase } from '../../common';
 
 abstract class DiscordCommandStructureBase extends CommandStructureBase {
   protected localizations: { [key: string]: ILocalizationBase } | null;
 
+  protected permissions: PermissionsBitField | null = null;
   protected parameters: ICommandParameter[];
   protected isSlashCommand: boolean;
   protected isLegacyCommand: boolean;
@@ -28,6 +29,10 @@ abstract class DiscordCommandStructureBase extends CommandStructureBase {
     this.allowDM = options.allowDM ?? true;
     this.type = options.type ?? ApplicationCommandType.ChatInput; // Slash Commands only
     this.nsfw = options.nsfw ?? false;
+
+    if (options.permissions) {
+      this.permissions = new PermissionsBitField(options.permissions);
+    }
 
     if (options.name_localizations || options.description_localizations) {
       this.isLocalized = true;
@@ -78,6 +83,7 @@ abstract class DiscordCommandStructureBase extends CommandStructureBase {
     if (!parameter) throw new Error('Unexpected Error: Parameter is required, if you are using a subcommand, please make sure that options is an array and not an object');
     if (!parameter.type) throw new Error('Parameter type is required for all parameters, on parameter: ' + (parameter.name ?? 'unknown'));
     if ((insideCommandGround || insideSubCommand) && parameter.type === ApplicationCommandOptionType.SubcommandGroup) throw new Error('Cannot have nested subcommand/group');
+    if (!parameter.options) parameter.options = [];
     if (((parameter.type === ApplicationCommandOptionType.Subcommand) ||
       (parameter.type === ApplicationCommandOptionType.SubcommandGroup)) &&
       parameter.options!.length > 25) throw new Error('Too many parameters (max 25)');
@@ -186,6 +192,10 @@ abstract class DiscordCommandStructureBase extends CommandStructureBase {
 
   public getSlashId(): string {
     return this.slashId ?? '';
+  }
+
+  public getPermissions(): PermissionsBitField {
+    return this.permissions ?? new PermissionsBitField();
   }
 
   public setSlashId(id: string): void {

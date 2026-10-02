@@ -11,7 +11,7 @@ import { CommandManagerBase, EHTTP } from '../../common/';
 import { ApplicationCommandType } from 'discord.js';
 import { CommandListener } from '../listeners';
 import { HTTPClient } from '../utils/';
-import { DiscordClient } from '..';
+import { DiscordClient, InteractionContextType } from '..';
 
 /**
  * CommandManager is a class responsible for managing and organizing the commands in a Discord bot.
@@ -85,7 +85,9 @@ export class CommandManager extends CommandManagerBase {
         'v10',
         `applications/${this.client.application.id}${packetObject.route.startsWith('/') ? '' : '/'}${packetObject.route}`,
         this.client.token,
-        packetObject.command ? JSON.stringify(packetObject.command) : null,
+        packetObject.command ? JSON.stringify(packetObject.command, (key, value) => {
+          return typeof value === 'bigint' ? value.toString() : value;
+        }) : null,
       );
       const data = JSON.parse((result[0] as string));
       const headers = result[2];
