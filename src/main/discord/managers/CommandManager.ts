@@ -169,9 +169,14 @@ export class CommandManager extends CommandManagerBase {
         name: command.getName(),
         type: command.getType(),
         description: command.getDescription(),
-        dm_permission: command.isDMAllowed(),
+        contexts: [
+          InteractionContextType.Guild,
+        ],
         nfsw: command.isNSFW(),
+        default_member_permissions: command.getPermissions() ? command.getPermissions()!.bitfield : null,
       };
+
+      if (command.isDMAllowed()) structuredCommand.contexts.push(InteractionContextType.BotDM, InteractionContextType.PrivateChannel);
 
       if (command.isLocalizedCommand()) {
         const localization = command.getLocalizations();
@@ -228,9 +233,14 @@ export class CommandManager extends CommandManagerBase {
         name: command.getName(),
         type: command.getType(),
         description: command.getDescription(),
-        dm_permission: command.isDMAllowed(),
+        contexts: [
+          InteractionContextType.Guild,
+        ],
         nfsw: command.isNSFW(),
+        default_member_permissions: command.getPermissions() ? command.getPermissions()!.bitfield : null,
       };
+
+      if (command.isDMAllowed()) structuredCommand.contexts.push(InteractionContextType.BotDM, InteractionContextType.PrivateChannel);
 
       if (command.isLocalizedCommand()) {
         const localization = command.getLocalizations();
