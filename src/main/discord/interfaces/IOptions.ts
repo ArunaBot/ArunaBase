@@ -1,7 +1,7 @@
 import { ApplicationCommandOptionType, ApplicationCommandType, APIApplicationCommandOptionChoice, CategoryChannelType } from 'discord.js';
 import { ICommandContext, DiscordClient } from '..';
-import { Logger } from '@promisepending/logger.js';
 import { ICommandOptionsBase } from '../../common';
+import { Logger } from '@promisepending/logger.js';
 
 export interface ICommandManagerOptions {
   client: DiscordClient;
@@ -54,6 +54,7 @@ export interface StructuredCommand {
   type: ApplicationCommandType;
   description: string;
   dm_permission: boolean;
+  nfsw: boolean;
   name_localizations?: Record<string, string>;
   description_localizations?: Record<string, string>;
   options?: ICommandParameter[];

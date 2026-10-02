@@ -170,6 +170,7 @@ export class CommandManager extends CommandManagerBase {
         type: command.getType(),
         description: command.getDescription(),
         dm_permission: command.isDMAllowed(),
+        nfsw: command.isNSFW(),
       };
 
       if (command.isLocalizedCommand()) {
@@ -228,6 +229,7 @@ export class CommandManager extends CommandManagerBase {
         type: command.getType(),
         description: command.getDescription(),
         dm_permission: command.isDMAllowed(),
+        nfsw: command.isNSFW(),
       };
 
       if (command.isLocalizedCommand()) {
