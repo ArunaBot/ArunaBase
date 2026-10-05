@@ -1,7 +1,15 @@
-import { ApplicationCommandOptionType, ApplicationCommandType, APIApplicationCommandOptionChoice, CategoryChannelType } from 'discord.js';
+import {
+  ApplicationCommandOptionType,
+  ApplicationCommandType,
+  APIApplicationCommandOptionChoice,
+  CategoryChannelType,
+  PermissionResolvable,
+  InteractionContextType,
+} from 'discord.js';
+
 import { ICommandContext, DiscordClient } from '..';
-import { Logger } from '@promisepending/logger.js';
 import { ICommandOptionsBase } from '../../common';
+import { Logger } from '@promisepending/logger.js';
 
 export interface ICommandManagerOptions {
   client: DiscordClient;
@@ -43,6 +51,7 @@ export interface ICommandOptions extends ICommandOptionsBase {
   parameters?: ICommandParameter[];
   type?: ApplicationCommandType;
   nsfw?: boolean;
+  permissions?: PermissionResolvable[];
 }
 
 export interface IAsyncCommandOptions extends ICommandOptions {
@@ -53,9 +62,13 @@ export interface StructuredCommand {
   name: string;
   type: ApplicationCommandType;
   description: string;
-  dm_permission: boolean;
+  /** @deprecated The `dm_permission` property is deprecated by Discord, and will be removed in a future version. Use `contexts` instead. */
+  dm_permission?: boolean;
+  nfsw: boolean;
+  contexts: InteractionContextType[]
   name_localizations?: Record<string, string>;
   description_localizations?: Record<string, string>;
   options?: ICommandParameter[];
   guild_id?: string;
+  default_member_permissions?: bigint | null;
 }

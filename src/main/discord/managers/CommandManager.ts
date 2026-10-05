@@ -11,7 +11,7 @@ import { CommandManagerBase, EHTTP } from '../../common/';
 import { ApplicationCommandType } from 'discord.js';
 import { CommandListener } from '../listeners';
 import { HTTPClient } from '../utils/';
-import { DiscordClient } from '..';
+import { DiscordClient, InteractionContextType } from '..';
 
 /**
  * CommandManager is a class responsible for managing and organizing the commands in a Discord bot.
@@ -85,7 +85,9 @@ export class CommandManager extends CommandManagerBase {
         'v10',
         `applications/${this.client.application.id}${packetObject.route.startsWith('/') ? '' : '/'}${packetObject.route}`,
         this.client.token,
-        packetObject.command ? JSON.stringify(packetObject.command) : null,
+        packetObject.command ? JSON.stringify(packetObject.command, (key, value) => {
+          return typeof value === 'bigint' ? value.toString() : value;
+        }) : null,
       );
       const data = JSON.parse((result[0] as string));
       const headers = result[2];
@@ -169,8 +171,14 @@ export class CommandManager extends CommandManagerBase {
         name: command.getName(),
         type: command.getType(),
         description: command.getDescription(),
-        dm_permission: command.isDMAllowed(),
+        contexts: [
+          InteractionContextType.Guild,
+        ],
+        nfsw: command.isNSFW(),
+        default_member_permissions: command.getPermissions() ? command.getPermissions()!.bitfield : null,
       };
+
+      if (command.isDMAllowed()) structuredCommand.contexts.push(InteractionContextType.BotDM, InteractionContextType.PrivateChannel);
 
       if (command.isLocalizedCommand()) {
         const localization = command.getLocalizations();
@@ -227,8 +235,14 @@ export class CommandManager extends CommandManagerBase {
         name: command.getName(),
         type: command.getType(),
         description: command.getDescription(),
-        dm_permission: command.isDMAllowed(),
+        contexts: [
+          InteractionContextType.Guild,
+        ],
+        nfsw: command.isNSFW(),
+        default_member_permissions: command.getPermissions() ? command.getPermissions()!.bitfield : null,
       };
+
+      if (command.isDMAllowed()) structuredCommand.contexts.push(InteractionContextType.BotDM, InteractionContextType.PrivateChannel);
 
       if (command.isLocalizedCommand()) {
         const localization = command.getLocalizations();

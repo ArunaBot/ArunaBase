@@ -1,20 +1,27 @@
 # Changelog
 
+## v1.0.0-ALPHA.23
+- [FEAT][discord]: Added support for command permissions;
+  - You can now set the required permissions for a command by filling the `permissions` property in the command structure;
+  - The method takes a `PermissionResolvable` array as a parameter;
+- [FIX][discord]: Fixed a bug where subcommands that doesn't include a `options` property would throw an error when registering the command;
+  - Before the fix, not including the `options` property would cause the library to throw an error, even though it's valid to omit it for subcommands;
+- [FIX][discord]: Fixed a bug that caused nfsw commands to be registered as non-nfsw commands;
+  - Before the fix, the `nsfw` property was not being sent correctly to discord when registering commands;
+- [FIX][discord]: Fixed a bug that caused the flag `isLegacyCommand` to be ignored in runtime;
+  - Before that, the `isLegacyCommand` flag was not being checked when executing commands, which caused legacy commands to be executed when they shouldn't be;
+
 ## v1.0.0-ALPHA.22
 - [FIX][discord]: Fixed `CommandManager#registerCustomPrefix` comparing conditions by object reference instead of by value, which meant the duplicate-condition check never triggered;
   - As a result, the same prefix condition could silently be registered more than once instead of throwing the documented error;
-
 - [CHORE][discord]: Upgraded to Discord.js v14.27.0;
   - This version includes several bug fixes and improvements;
 
 ## v1.0.0-ALPHA.21
 - [FIX]: Fixed a bug where the command description was not being validated for length;
-
 - [FIX]: Command names and aliases with _ now doesn't trigger a warning about special characters, as _ is a valid character in command names;
   - Before that, we were replacing _ with another _ in the command name, which was unnecessary;
-
 - [FIX][discord]: Command registration errors now propagate back to the caller instead of crashing the internal request queue;
-
 - [CHORE]: Bump dependencies;
 
 ## v1.0.0-ALPHA.20
@@ -24,7 +31,6 @@
 ## v1.0.0-ALPHA.19
 
 - [CHORE]: Removed unused dependency `path-to-regexp`;
-
 - [CHORE][discord]: Upgraded to Discord.js v14.26.2;
   - This version includes several bug fixes and improvements;
 
@@ -34,24 +40,16 @@
   - Arguments are now keyed by their parameter name (lowercase), matching the behavior of slash commands;
   - This affects both legacy (prefix) commands and slash commands;
   - Update any code that accesses `context.args` by index (e.g. `args[0]`) to use `args.get('paramName')` instead;
-
 - [FEAT][discord]: Legacy commands now support named arguments;
   - Arguments can be passed by name using the `--name=value` or `-name:value` syntax, in addition to the traditional positional syntax;
   - Positional and named arguments can be mixed freely;
-
 - [FEAT][discord]: The last `String` parameter of a legacy command now automatically captures all remaining positional tokens as a single joined string;
-
 - [FIX][discord]: Passing extra positional arguments that exceed the command's parameter count now returns a clear error message instead of silently being appended to the last argument;
   - Unknown named arguments also produce a clear error message;
-
 - [FIX][discord]: User, channel, and role resolution now correctly strips mention formatting (e.g. `<@123>`, `<#456>`, `<@&789>`) before resolving by ID;
-
 - [FIX][discord]: Integer validation now uses a strict regex (`/^-?\d+$/`) instead of `parseInt`, preventing strings like `"12abc"` from being accepted as valid integers;
-
 - [FIX][discord]: Number validation now uses `Number()` instead of `parseFloat`, improving consistency with JavaScript's standard numeric coercion;
-
 - [FIX][discord]: Subcommand and SubcommandGroup option types are now excluded from parameter iteration and the usage string, preventing them from being treated as regular arguments;
-
 - [CHORE]: Bump dependencies;
 
 ## v1.0.0-ALPHA.17
@@ -60,16 +58,11 @@
   - This method allows you to show a modal to the user in response to a slash command interaction;
   - It takes a `ModalBuilder` object as a parameter and returns a promise that resolves to an `InteractionCallbackResponse`;
   - This method is only available for slash commands, as legacy commands don't support modals;
-
 - [FEAT][discord]: Emit a `modalSubmit` event when a modal is submitted;
   - This allows you to listen for modal submissions and handle them in your code;
-
 - [FIX][discord]: Fixed an issue where, for legacy commands (prefix commands) with `allowDM: false`, argument prompts (such as asking for a member ID) would still appear in DMs, even though the command should not be available;
-
 - [CHANGE][discord]: The `ICommandContext` interface now includes an `isDM` property, which indicates whether the command was invoked in a DM channel or not;
-
 - [TYPING][discord]: Better typing for discord command context;
-
 - [CHORE]: Bump dependencies;
 
 ## v1.0.0-ALPHA.16
@@ -80,47 +73,36 @@
 ## v1.0.0-ALPHA.15
 
 - [TYPING][discord]: Better typing for command arguments;
-
 - [CHORE][discord]: Split SlashHandler and MessageHandler into separate files;
   - This doesn't change any functionality or API, it's just a code organization improvement;
-
 - [CHORE]: Bump dependencies
 
 ## v1.0.0-ALPHA.14
 
 - [BREAKING]: Several interfaces were renamed in favor of their namespace usage  
   - For example: `IDiscordOptions` -> `Discord.IOptions`
-
 - [BREAKING]: The `HTTP` namespace is no longer exported globally  
   - Its internal dependencies make standalone usage impractical  
   - If you need an HTTP client library, consider using [Axios](https://www.npmjs.com/package/axios) or Node.js built-in features
-
 - [BREAKING][discord]: The previously deprecated methods were permanently removed  
   - `CommandManager#getGlobalCommands`  
   - `CommandManager#getGlobalCommand`  
   - `CommandManager#hasGlobalCommand`
-
 - [BREAKING]: `CommandManager` is now a singleton
-
 - [BREAKING]: `CommandManager` now stores commands in a native `Map` instead of a `Collection`  
   - This is part of the abstraction effort, since `Collection` is provided by `discord.js`
-
 - [FEAT]: Began the process of abstraction for common functionality  
   - All clients now extend `IClientBase`  
   - `CommandManager` is no longer exclusive to Discord and will be implemented for other clients soon
-
 - [FEAT]: Introduced the new `Common` namespace  
   - Contains interfaces and utilities shared across different clients
-
 - [FIX]: Various performance improvements were made
-
 - [CHORE]: Bump dependencies
 
 ## v1.0.0-ALPHA.13
 
 - [REVERT]: Reverted ALPHA.12 changes;
   - Discord.js doesn't provide the `Role` type in the command context, only its ID;
-
 - [NEW]: Upgraded to Discord.js v14.20.0;
   - This version includes several bug fixes and improvements;
 
@@ -134,9 +116,7 @@
 - [FIX]: Fixed a rare crash related to slash commands;
   - The crash occurred when a slash command was executed while the bot was not ready;
   - This was caused by a delay in command registration that could happen after the bot had been offline for a while;
-
 - [FIX]: Enabled `enforceNonce` to prevent duplicated messages;
-
 - [FIX]: Fixed incorrect usage of `Math.max` in parameter validation;
   - The issue caused string parameters to always require 6000 characters;
 
@@ -145,28 +125,21 @@
 - [BREAKING]: All methods related to guild commands have been removed;
   - This change shouldn't affect anyone, as guild commands haven't been implemented yet;
   - A new system for guild commands will be implemented in the future;
-
 - [BREAKING]: The HTTP server was removed;
   - This change has introduced to simplify the codebase and make it more maintainable;
   - The HTTP server wasn't used in any of the examples and had no documentation, so its impact on users should be minimal;
-
 - [DEPRECATED]: Some methods are now deprecated:
   - `CommandManager#generateAsyncCommand` is deprecated, use `CommandManager#generateCommand` instead;
   - `CommandManager#getGlobalCommand` is deprecated, use `CommandManager#getCommand` instead;
   - `CommandManager#hasGlobalCommand` is deprecated, use `CommandManager#hasCommand` instead;
-
 - [CHORE]: Bump dependencies;
-
 - [NOTE]: Support for Node v18+ has been restored;
 
 ## v1.0.0-ALPHA.9
 
 - [NEW]: Allow the user to enable ephemeral responses when using "deferReply";
-
 - [FIX]: Missing await causes crash sometimes;
-
 - [CHORE]: Remove some unused configurations;
-
 - [CHORE]: Bump dependencies;
 
 ## v1.0.0-ALPHA.8
@@ -184,12 +157,9 @@
 - [NEW]: Added support for buttons in messages;
   - You can now add buttons to your messages using the `setButtons` method;
   - The method takes a `ButtonStructure` object as a parameter;
-
 - [NEW]: Added support for custom prefixes (for legacy commands);
   - You can now set a custom prefix for your guild or user using the `registerCustomPrefix` method;
   - The method takes a `prefix` and `condition` as parameters;
-
 - [CHORE]: Bump dependencies;
-
 - [BREAKING]: Dropped support for node versions below v22;
   - The library now requires node v22 or higher;

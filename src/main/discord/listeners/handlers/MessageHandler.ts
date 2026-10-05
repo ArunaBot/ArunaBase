@@ -119,6 +119,8 @@ export class MessageHandler {
     const command = this.manager.getCommand(commandName);
     if (!command) return [null, null];
 
+    if (!command.isLegacy()) return [null, null];
+
     if (!command.isDMAllowed() && isDM) {
       message.reply({ embeds: [
         new RichEmbed()
@@ -132,6 +134,13 @@ export class MessageHandler {
       },
       }).catch();
 
+      return [null, null];
+    }
+
+    if (!isDM &&
+      command.getPermissions().toArray().length > 0 &&
+      !message.member?.permissions.has(command.getPermissions())
+    ) {
       return [null, null];
     }
 
